@@ -5,3 +5,6 @@ The goal of this project is to create a program will read a file, describe the p
 
 ## Alogrithms
 [Greedy Search documentation](/Documentation/Algorithms/GreedySearch.MD)
+
+## Datastrutcure
+[Datastrutcure documentation](/Documentation/Datastrucutre/Datastrucutre.MD)
