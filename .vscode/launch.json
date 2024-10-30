@@ -1,0 +1,37 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Own debugger build",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/n_puzzle",
+            "args": [
+                "-a",
+                "0",
+                "-hx",
+                "0",
+                // "-g",
+                // "3",
+                "-f",
+                "${workspaceFolder}/puzzles/default.txt"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/srcs",
+            "MIMode": "gdb",
+            "preLaunchTask": "build",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty printing",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "logging": {
+                "engineLogging": true
+            },
+            "launchCompleteCommand": "exec-run",
+        }
+    ]
+}

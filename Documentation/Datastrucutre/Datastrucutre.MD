@@ -13,22 +13,28 @@ optimize:(<stock_name>|time[;<stock_name>|time[...]])
 
 Moreover, we have a maximum delay that is going to be given as an argument.
 
-We also know that the **stock_name** is going to match the **needs**.
+We also know that the **stock_name** is going to match the **needs**.map
 
-#### Stocks
-The stocks need to be a map where the name of the stock is going to be the key and the value is going to be the quantity
 
-#### Processes
-Each process need to be in a map where the key is going to be its name, and the value is going to be a pair of **list stocks** / **list stocks**, where the first one represent the needs, and the second one represent the results.
+### Process class
 
-#### Optimization
-A boolean if we want to optimize time or not
-A list of stocks we want to optimize. It needs to be a list where we can easily check wether the sotck is in or not.
+The stock will be represented by a std::pair<std::string, unsigned long>, which are going to be the name and the value
 
-#### Delay
-We will have the maximum delay, which will be given as argument and the current delay, which will be the delay the process has been running so far.
+The Process class will have:
+- A list of stocks that are going to represent the needs
+- A list of stocks that are going to represent the results
+- The delay the process is going to take
+- The current delay the process has been running
 
-#### List of actions
-This might not be necessary as the actions will be printed each time they are exectued.
+### Krpsim class
 
-A list where we are going to push each action we are taking througought the all process. 
+The stocks are going to be represented by a std::map<std::string, unsigned long>, which are going to be the name and the value
+
+The Krpsim class will have: 
+- The current stocks we have
+- A list of procceses that are defined in the file
+- A list of processes that are in used 
+- A boolean to know if we want to optimize the time
+- A set of stocks to optimized
+- The maximum delay
+- The current delay
