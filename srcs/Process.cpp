@@ -1,6 +1,6 @@
 #include "Process.hpp"
 
-Process::Process(std::vector<stocks> needs, std::vector<stocks> results, unsigned long delay): needs(needs), results(results), delay(delay) {
+Process::Process(std::vector<stockType> needs, std::vector<stockType> results, unsigned long delay): needs(needs), results(results), delay(delay) {
 }
 
 Process::~Process() {}

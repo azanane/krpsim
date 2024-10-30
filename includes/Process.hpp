@@ -8,21 +8,21 @@
 
 class Process {
     private:
-        typedef std::pair<std::string, unsigned long> stocks;
+        typedef std::pair<std::string, unsigned long> stockType;
 
-        std::vector<stocks> needs;
-        std::vector<stocks> results;
+        std::vector<stockType> needs;
+        std::vector<stockType> results;
 
         unsigned long delay;
         unsigned long currentDelay;
 
     public:
 
-    Process(std::vector<stocks> needs, std::vector<stocks> results, unsigned long delay);
+    Process(std::vector<stockType> needs, std::vector<stockType> results, unsigned long delay);
     ~Process();
 
-    std::vector<stocks> getNeeds() const;
-    std::vector<stocks> getResults() const;
+    std::vector<stockType> getNeeds() const;
+    std::vector<stockType> getResults() const;
     unsigned long getDelay() const;
     unsigned long getCurrentDelay() const;
 
