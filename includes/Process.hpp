@@ -8,7 +8,7 @@
 
 class Process {
     private:
-        typedef std::pair<std::string, unsigned long> stockType;
+        typedef std::pair<std::string, int> stockType;
 
         std::vector<stockType> needs;
         std::vector<stockType> results;

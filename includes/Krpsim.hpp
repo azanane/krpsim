@@ -9,7 +9,7 @@
 
 class Krpsim {
     private:
-        typedef std::map<std::string, unsigned long> stocksType;
+        typedef std::map<std::string, int> stocksType;
 
         // Stocks and processes        
         stocksType stocks;

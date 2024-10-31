@@ -5,11 +5,11 @@ Process::Process(std::vector<stockType> needs, std::vector<stockType> results, u
 
 Process::~Process() {}
 
-std::vector<std::pair<std::string, unsigned long>> Process::getNeeds() const {
+std::vector<std::pair<std::string, int>> Process::getNeeds() const {
     return needs;
 }
 
-std::vector<std::pair<std::string, unsigned long>> Process::getResults() const {
+std::vector<std::pair<std::string, int>> Process::getResults() const {
     return results;
 }
 
