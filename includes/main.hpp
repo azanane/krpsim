@@ -3,5 +3,6 @@
 
 #include <iostream>
 #include "Krpsim.hpp"
+#include "Parser.hpp"
 
 #endif
