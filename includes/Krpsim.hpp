@@ -6,13 +6,13 @@
 #include <set>
 #include <chrono>
 #include "Process.hpp"
+#include "Stock.hpp"
 
 class Krpsim {
     private:
-        typedef std::map<std::string, unsigned long> stocksType;
 
         // Stocks and processes        
-        stocksType stocks;
+        std::map<std::string, Stock> stocks;
         std::vector<Process> processes;
         std::vector<Process> inUsedProcess;
 
@@ -26,8 +26,20 @@ class Krpsim {
 
     public:
 
-    Krpsim(std::string fileName, unsigned long delay);
-    ~Krpsim();
+        Krpsim(std::string fileName, unsigned long delay);
+        ~Krpsim();
+
+        std::map<std::string, Stock> getStocks() const;
+        std::vector<Process> getProcesses() const;
+        std::vector<Process> getInUsedProcess() const;
+
+        // Optimization
+        bool getIsTimeOpti() const;
+        std::set<std::string> getOptimizedStocks() const;
+
+        // Delays
+        unsigned long getMaxDelay() const;
+        unsigned long getCurrentDelay() const;
 };
 
 

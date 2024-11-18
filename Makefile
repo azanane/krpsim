@@ -13,7 +13,8 @@ CACHE = .cache
 SRCS_DIR = srcs
 SRCS = 	main.cpp 	\
 		Krpsim.cpp	\
-		Process.cpp
+		Process.cpp \
+		Stock.cpp
 		
 NAME = krpsim
 
