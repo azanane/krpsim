@@ -1,5 +1,7 @@
 #include "Stock.hpp"
 
+Stock::Stock(){}
+
 Stock::Stock(std::string name, long quantity) : name(name), quantity(quantity){
 }
 
@@ -14,6 +16,14 @@ long Stock::getQuantity() const {
 }
 std::vector<std::string> Stock::getAssociateProcesses() const {
     return associateProcesses;
+}
+
+void Stock::setName(std::string name) {
+    this->name = name;
+}
+
+void Stock::setQuantity(long quantity) {
+    this->quantity = quantity;
 }
 
 void Stock::addProcess(std::string processName) {

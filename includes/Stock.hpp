@@ -12,12 +12,16 @@ private:
     std::vector<std::string>    associateProcesses;
 
 public:
+    Stock();
     Stock(std::string name, long quantity);
     ~Stock();
 
     std::string getName() const;
     long getQuantity() const;
     std::vector<std::string> getAssociateProcesses() const;
+
+    void setName(std::string name);
+    void setQuantity(long quantity);
 
     void addProcess(std::string processName);
     void addProcesses(std::vector<std::string> processesName);
