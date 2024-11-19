@@ -14,7 +14,8 @@ SRCS_DIR = srcs
 SRCS = 	main.cpp 	\
 		Krpsim.cpp	\
 		Process.cpp \
-		DynamicProgramming.cpp
+		DynamicProgramming.cpp \
+		Stock.cpp
 		
 NAME = krpsim
 

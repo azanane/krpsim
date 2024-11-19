@@ -1,15 +1,15 @@
 #include "Process.hpp"
 
-Process::Process(std::vector<stockType> needs, std::vector<stockType> results, unsigned long delay): needs(needs), results(results), delay(delay) {
+Process::Process(std::vector<Stock> needs, std::vector<Stock> results, unsigned long delay): needs(needs), results(results), delay(delay) {
 }
 
 Process::~Process() {}
 
-std::vector<std::pair<std::string, unsigned long>> Process::getNeeds() const {
+std::vector<Stock> Process::getNeeds() const {
     return needs;
 }
 
-std::vector<std::pair<std::string, unsigned long>> Process::getResults() const {
+std::vector<Stock> Process::getResults() const {
     return results;
 }
 
