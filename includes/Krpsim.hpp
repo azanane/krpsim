@@ -44,7 +44,9 @@ class Krpsim {
         void setMaxDelay(unsigned long maxDelay);
         void setCurrentDelay(unsigned long currentDelay);
 
+        void addOrUpdateStock(Stock stock);
         void addStock(Stock stock);
+        void updateStock(Stock stock, std::map<std::string, Stock>::iterator &it);
         void addProcess(Process process);
         void addInUsedProcess(Process process);
 

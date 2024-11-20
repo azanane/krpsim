@@ -43,8 +43,22 @@ void Krpsim::setCurrentDelay(unsigned long currentDelay) {
     this->currentDelay = currentDelay;
 }
 
+void Krpsim::addOrUpdateStock(Stock stock) {
+    std::map<std::string, Stock>::iterator it = this->stocks.find(stock.getName());
+    if (it != this->stocks.end()){
+        updateStock(stock, it);
+    } else {
+        addStock(stock);
+    }
+}
+
 void Krpsim::addStock(Stock stock) {
     this->stocks.insert(std::make_pair(stock.getName(), stock));
+}
+
+void Krpsim::updateStock(Stock stock, std::map<std::string, Stock>::iterator &it) {
+    it->second.setQuantity(stock.getQuantity());
+    it->second.addProcesses(stock.getAssociateProcesses());
 }
 
 void Krpsim::addProcess(Process process){

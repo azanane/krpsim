@@ -8,7 +8,7 @@
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/krpsim",
             "args": [
-                "../ressources/ikea",
+                "../ressources/inception",
                 "10"
             ],
             "cwd": "${workspaceFolder}/srcs"

@@ -207,8 +207,9 @@ void Parser::initializeStock() {
         for (Stock stock : process.getResults()) {
             if (stocks.find(stock.getName()) == stocks.end()) {
                 stock.setQuantity(0);
-                krpsim.addStock(stock);
             }
+            stock.addProcess(process.getName());
+            krpsim.addOrUpdateStock(stock);
         }
     }
 }
