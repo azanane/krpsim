@@ -24,7 +24,7 @@ void Parser::parse() {
 
     try {
         this->parseFile(inputFile);
-
+        this->initializeStock();
     }
     catch (std::exception &e){
         std::cerr << e.what() << std::endl;
@@ -196,16 +196,16 @@ void Parser::isEndOfOptiLineValid(std::string &line, std::size_t &index, std::si
 }
 
 void Parser::initializeStock() {
+    std::map<std::string, Stock> stocks = krpsim.getStocks();
     for (Process process : krpsim.getProcesses()) {
         for (Stock stock : process.getNeeds()) {
-            if (krpsim.getStocks().find(stock.getName()) == krpsim.getStocks().end()) {
+            if (stocks.find(stock.getName()) == stocks.end()) {
                 stock.setQuantity(0);
                 krpsim.addStock(stock);
             }
         }
-
         for (Stock stock : process.getResults()) {
-            if (krpsim.getStocks().find(stock.getName()) == krpsim.getStocks().end()) {
+            if (stocks.find(stock.getName()) == stocks.end()) {
                 stock.setQuantity(0);
                 krpsim.addStock(stock);
             }
