@@ -9,7 +9,7 @@
 
 class Process {
     private:
-        std::string             name;
+        std::string         name;
         std::vector<Stock>  needs;
         std::vector<Stock>  results;
 
@@ -18,15 +18,22 @@ class Process {
 
     public:
 
-    Process(std::vector<Stock> needs, std::vector<Stock> results, unsigned long delay);
+
+
+    Process();
     ~Process();
 
+    std::string getName() const;
     std::vector<Stock> getNeeds() const;
     std::vector<Stock> getResults() const;
     unsigned long getDelay() const;
     unsigned long getCurrentDelay() const;
 
+    void setName(std::string name);
     void setCurrentDelay(unsigned long delay);
+    void setDelay(unsigned long delay);
+    void addNeed(Stock stock);
+    void addResult(Stock stock);
 };
 
 

@@ -24,7 +24,7 @@ OBJS_DIR = build
 OBJS = $(addprefix $(OBJS_DIR)/,$(subst $(SRCS_DIR),,$(SRCS:.cpp=.o)))
 
 CC = c++
-CFLAGS = -Wall -Wextra -Werror -MMD -MP -Iincludes -g3 # -O3 -fsanitize=address
+CFLAGS = -Wall -Wextra -Werror -MMD -MP -Iincludes -g3 -fstandalone-debug # -O3 -fsanitize=address
 RM = rm -rf
 
 # Set the number of object files 

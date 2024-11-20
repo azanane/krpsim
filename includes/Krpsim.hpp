@@ -26,7 +26,7 @@ class Krpsim {
 
     public:
 
-        Krpsim(std::string fileName, unsigned long delay);
+        Krpsim();
         ~Krpsim();
 
         std::map<std::string, Stock> getStocks() const;
@@ -40,6 +40,17 @@ class Krpsim {
         // Delays
         unsigned long getMaxDelay() const;
         unsigned long getCurrentDelay() const;
+
+        void setMaxDelay(unsigned long maxDelay);
+        void setCurrentDelay(unsigned long currentDelay);
+
+        void addStock(Stock stock);
+        void addProcess(Process process);
+        void addInUsedProcess(Process process);
+
+        // Optimization
+        void setIsTimeOpti(bool isTimeOpti);
+        void addOptimizedStocks(std::string optimizedStock);
 };
 
 

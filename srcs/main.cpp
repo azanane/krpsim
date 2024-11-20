@@ -6,7 +6,9 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    Parser(std::string(argv[1]), std::string(argv[2]));
+    Parser parser = Parser(std::string(argv[1]), std::string(argv[2]));
+
+
 
     return 0;
 }
