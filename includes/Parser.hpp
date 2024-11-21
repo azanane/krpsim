@@ -32,6 +32,7 @@ private:
     void readProcess(std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex);
     void readOptimizedStock(std::string &line, std::size_t &index, std::size_t &newIndex);
 
+    void addStockFromPorcess(std::string &line, Process &processTmp, std::size_t &index, std::size_t &newIndex, bool isNeed);
     void initializeStock();
 
 public:

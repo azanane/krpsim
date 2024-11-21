@@ -79,8 +79,7 @@ void Parser::readStock(std::string &line, std::string &nameTmp, std::size_t &ind
     readNextQuantity(line, quantityTmp, index, newIndex);
     isEndOfStockAndProcessLineValid(line, index, newIndex);           
 
-    krpsim.addStock(Stock(nameTmp, quantityTmp));
-
+    krpsim.addOrUpdateStock(Stock(nameTmp, quantityTmp));
 }
 void Parser::readProcess(std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex) {
 
@@ -92,27 +91,13 @@ void Parser::readProcess(std::string &line, std::string &nameTmp, std::size_t &i
     
     newIndex++;
     // Read the needs
-    while (newIndex < line.size() - 1 && line[newIndex - 1] != ')') {
-        readNextName(line, nameTmp, index, newIndex);
-        readNextQuantity(line, quantityTmp, index, newIndex);
-        stockTmp.setName(nameTmp);
-        stockTmp.setQuantity(quantityTmp);
-        processTmp.addNeed(stockTmp);
-        newIndex++;
-    }
+    addStockFromPorcess(line, processTmp, index, newIndex, true);
     if (processTmp.getNeeds().empty()) {
         throw std::invalid_argument("No needs were given for the process: " + processTmp.getName());
     }
     newIndex += 2;
     // Read the results
-    while (newIndex < line.size() -1 && line[newIndex - 1] != ')') {
-        readNextName(line, nameTmp, index, newIndex);
-        readNextQuantity(line, quantityTmp, index, newIndex);
-        stockTmp.setName(nameTmp);
-        stockTmp.setQuantity(quantityTmp);
-        processTmp.addResult(stockTmp);
-        newIndex++;
-    }
+    addStockFromPorcess(line, processTmp, index, newIndex, false);
     if (processTmp.getResults().empty()) {
         throw std::invalid_argument("No results were given for the process: " + processTmp.getName());
     }
@@ -128,6 +113,7 @@ void Parser::readProcess(std::string &line, std::string &nameTmp, std::size_t &i
 
     krpsim.addProcess(processTmp);
 }
+
 void Parser::readOptimizedStock(std::string &line, std::size_t &index, std::size_t &newIndex) {
     std::string nameTmp;
     newIndex++;
@@ -151,6 +137,21 @@ void Parser::readNextQuantity(std::string &line, long &quantity, std::size_t &in
     }
 }
 
+void Parser::addStockFromPorcess(std::string &line, Process &processTmp, std::size_t &index, std::size_t &newIndex, bool isNeed) {
+    std::string nameTmp;
+    long        quantityTmp;
+    Stock       stockTmp;
+
+    while (newIndex < line.size() - 1 && line[newIndex - 1] != ')') {
+        readNextName(line, nameTmp, index, newIndex);
+        readNextQuantity(line, quantityTmp, index, newIndex);
+        stockTmp.setName(nameTmp);
+        stockTmp.setQuantity(quantityTmp);
+        isNeed ? processTmp.addNeed(stockTmp) : processTmp.addResult(stockTmp);
+        newIndex++;
+    }
+}
+
 void Parser::readNextName(std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex) {
     index = newIndex;
     goAfterNextColon(line, newIndex);
@@ -159,6 +160,9 @@ void Parser::readNextName(std::string &line, std::string &nameTmp, std::size_t &
 }
 
 void Parser::whileIsDigit(std::string &line, std::size_t &newIndex) {
+    if (line[newIndex] == '-') {
+        newIndex++;
+    }
     while (std::isdigit(line[newIndex]) && newIndex < line.size()) {
         newIndex++;
     }
@@ -205,8 +209,11 @@ void Parser::initializeStock() {
             }
         }
         for (Stock stock : process.getResults()) {
-            if (stocks.find(stock.getName()) == stocks.end()) {
+            std::map<std::string, Stock>::iterator it = stocks.find(stock.getName());
+            if (it == stocks.end()) {
                 stock.setQuantity(0);
+            } else {
+                stock.setQuantity(it->second.getQuantity());
             }
             stock.addProcess(process.getName());
             krpsim.addOrUpdateStock(stock);
