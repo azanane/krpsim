@@ -1,11 +1,9 @@
 #include "Krpsim.hpp"
 
-Krpsim::Krpsim(std::string fileName, unsigned long delay) {
-    (void)fileName;
-    (void)isTimeOpti;
-
-    maxDelay = delay;
-    currentDelay = 0;
+Krpsim::Krpsim() {
+    this->maxDelay = 0;
+    this->currentDelay = 0;
+    this->isTimeOpti = false;
 }
 
 Krpsim::~Krpsim() {}
@@ -36,3 +34,46 @@ unsigned long  Krpsim::getCurrentDelay() const {
     return currentDelay;
 }
 
+// Delays
+void Krpsim::setMaxDelay(unsigned long maxDelay) {
+    this->maxDelay = maxDelay;
+}
+
+void Krpsim::setCurrentDelay(unsigned long currentDelay) {
+    this->currentDelay = currentDelay;
+}
+
+void Krpsim::addOrUpdateStock(Stock stock) {
+    std::map<std::string, Stock>::iterator it = this->stocks.find(stock.getName());
+    if (it != this->stocks.end()){
+        updateStock(stock, it);
+    } else {
+        addStock(stock);
+    }
+}
+
+void Krpsim::addStock(Stock stock) {
+    this->stocks.insert(std::make_pair(stock.getName(), stock));
+}
+
+void Krpsim::updateStock(Stock stock, std::map<std::string, Stock>::iterator &it) {
+    it->second.setQuantity(stock.getQuantity());
+    it->second.addProcesses(stock.getAssociateProcesses());
+}
+
+void Krpsim::addProcess(Process process){
+    this->processes.push_back(process);
+}
+
+void Krpsim::addInUsedProcess(Process process) {
+    this->inUsedProcess.push_back(process);
+}
+
+// Optimization
+void Krpsim::setIsTimeOpti(bool isTimeOpti) {
+    this->isTimeOpti = isTimeOpti;
+}
+
+void Krpsim::addOptimizedStocks(std::string optimizedStock){
+    this->optimizedStocks.insert(optimizedStock);
+}

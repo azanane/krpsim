@@ -18,7 +18,7 @@ We also know that the **stock_name** is going to match the **needs**.map
 
 ### Process class
 
-The stock will be represented by a std::pair<std::string, unsigned long>, which are going to be the name and the value
+The stock will be represented by a std::pair<std::string, int>, which are going to be the name and the value
 
 The Process class will have:
 - A list of stocks that are going to represent the needs
@@ -28,7 +28,7 @@ The Process class will have:
 
 ### Krpsim class
 
-The stocks are going to be represented by a std::map<std::string, unsigned long>, which are going to be the name and the value
+The stocks are going to be represented by a std::map<std::string, int>, which are going to be the name and the value
 
 The Krpsim class will have: 
 - The current stocks we have
