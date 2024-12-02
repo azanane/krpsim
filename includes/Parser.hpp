@@ -20,21 +20,23 @@ private:
 
     Krpsim              krpsim;
 
-    void whileIsDigit(std::string &line, std::size_t &newIndex);
-    void goAfterNextColon(std::string &line, std::size_t &newIndex);
-    void isEndOfLineValid(std::string &line, std::size_t &index, std::size_t &newIndex);
+    void whileIsDigit(const std::string &line, std::size_t &newIndex);
+    void goAfterNextColon(const std::string &line, std::size_t &newIndex);
+    void isEndOfLineValid(const std::string &line, std::size_t &index, std::size_t &newIndex);
 
-    void verifyNextChar(std::string &line, char c, std::size_t &index, std::size_t &newIndex);
-    void passChar(std::string &line, char c, std::size_t &index, std::size_t &newIndex);
+    void verifyNextChar(const std::string &line, char c, std::size_t &index, std::size_t &newIndex);
+    void passChar(const std::string &line, char c, std::size_t &index, std::size_t &newIndex);
 
-    void readNextName(std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex);
-    void readNextQuantity(std::string &line, long &quantity, std::size_t &index, std::size_t &newIndex);
+    void readDelay(const std::string &delay);
 
-    void readStock(std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex);
-    void readProcess(std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex);
-    void readOptimizedStock(std::string &line, std::size_t &index, std::size_t &newIndex);
+    void readNextName(const std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex);
+    void readNextQuantity(const std::string &line, long &quantity, std::size_t &index, std::size_t &newIndex);
 
-    void addStockFromPorcess(std::string &line, Process &processTmp, std::size_t &index, std::size_t &newIndex, bool isNeed);
+    void readStock(const std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex);
+    void readProcess(const std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex);
+    void readOptimizedStock(const std::string &line, std::size_t &index, std::size_t &newIndex);
+
+    void addStockFromPorcess(const std::string &line, Process &processTmp, std::size_t &index, std::size_t &newIndex, bool isNeed);
     void initializeStock();
 
 public:

@@ -2,12 +2,8 @@
 
 Parser::Parser(const std::string fileName, const std::string delay) {
     this->filename = fileName;
-    int maxDelayTmp = std::atoi(delay.c_str());
-    if (maxDelayTmp < 0) {
-		std::cerr << "Invalid delay" << std::endl;
-        exit(1);
-    }
-    krpsim.setMaxDelay(maxDelayTmp);
+    readDelay(delay);
+
     parse();
 }
 
@@ -34,6 +30,21 @@ void Parser::parse() {
 
 Krpsim Parser::getKrspim() const {
     return krpsim;
+}
+
+void Parser::readDelay(const std::string &delay) {
+    std::size_t index = 0;
+    whileIsDigit(delay, index);
+    if (index == 0) {
+		std::cerr << "Invalid delay" << std::endl;
+        exit(1);
+    }
+    int maxDelayTmp = std::atoi(delay.c_str());
+    if (maxDelayTmp < 0) {
+		std::cerr << "Invalid delay" << std::endl;
+        exit(1);
+    }
+    krpsim.setMaxDelay(maxDelayTmp);
 }
 
 void Parser::parseFile(std::ifstream& inputFile) {
@@ -73,7 +84,7 @@ void Parser::parseFile(std::ifstream& inputFile) {
     }
 }
 
-void Parser::readStock(std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex) {
+void Parser::readStock(const std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex) {
     long   quantityTmp;
 
     readNextQuantity(line, quantityTmp, index, newIndex);
@@ -81,7 +92,7 @@ void Parser::readStock(std::string &line, std::string &nameTmp, std::size_t &ind
 
     krpsim.addOrUpdateStock(Stock(nameTmp, quantityTmp));
 }
-void Parser::readProcess(std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex) {
+void Parser::readProcess(const std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex) {
 
     Process     processTmp;
     long        quantityTmp;
@@ -121,7 +132,7 @@ void Parser::readProcess(std::string &line, std::string &nameTmp, std::size_t &i
     krpsim.addProcess(processTmp);
 }
 
-void Parser::readOptimizedStock(std::string &line, std::size_t &index, std::size_t &newIndex) {
+void Parser::readOptimizedStock(const std::string &line, std::size_t &index, std::size_t &newIndex) {
     std::string nameTmp;
 
     verifyNextChar(line, '(', index, newIndex);
@@ -141,7 +152,7 @@ void Parser::readOptimizedStock(std::string &line, std::size_t &index, std::size
     isEndOfLineValid(line, index, --newIndex);
 }
 
-void Parser::readNextQuantity(std::string &line, long &quantity, std::size_t &index, std::size_t &newIndex) {
+void Parser::readNextQuantity(const std::string &line, long &quantity, std::size_t &index, std::size_t &newIndex) {
     index = newIndex;
     whileIsDigit(line, newIndex);
     quantity = std::atoi(line.substr(index, newIndex + 1 - index).c_str());
@@ -150,7 +161,7 @@ void Parser::readNextQuantity(std::string &line, long &quantity, std::size_t &in
     }
 }
 
-void Parser::addStockFromPorcess(std::string &line, Process &processTmp, std::size_t &index, std::size_t &newIndex, bool isNeed) {
+void Parser::addStockFromPorcess(const std::string &line, Process &processTmp, std::size_t &index, std::size_t &newIndex, bool isNeed) {
     std::string nameTmp;
     long        quantityTmp;
     Stock       stockTmp;
@@ -170,14 +181,14 @@ void Parser::addStockFromPorcess(std::string &line, Process &processTmp, std::si
     index = newIndex;
 }
 
-void Parser::passChar(std::string &line, char c, std::size_t &index, std::size_t &newIndex) {
+void Parser::passChar(const std::string &line, char c, std::size_t &index, std::size_t &newIndex) {
     while (line[newIndex] == c) {
         newIndex++;
     }
     index = newIndex;
 }
 
-void Parser::verifyNextChar(std::string &line, char c, std::size_t &index, std::size_t &newIndex) {
+void Parser::verifyNextChar(const std::string &line, char c, std::size_t &index, std::size_t &newIndex) {
     passChar(line, ' ', index, newIndex);
     if (line[newIndex] != c){
         throw std::invalid_argument("Error occured in line: " + line + ". Char \'" + line[newIndex] + "\' where given at index " + std::to_string(newIndex) + " instead of char \'" + c + "\'");
@@ -187,14 +198,14 @@ void Parser::verifyNextChar(std::string &line, char c, std::size_t &index, std::
     passChar(line, ' ', index, newIndex);
 }
 
-void Parser::readNextName(std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex) {
+void Parser::readNextName(const std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex) {
     index = newIndex;
     goAfterNextColon(line, newIndex);
     nameTmp = line.substr(index, newIndex - index);
     std::transform(nameTmp.begin(), nameTmp.end(), nameTmp.begin(), ::tolower);
 }
 
-void Parser::whileIsDigit(std::string &line, std::size_t &newIndex) {
+void Parser::whileIsDigit(const std::string &line, std::size_t &newIndex) {
     if (line[newIndex] == '-') {
         newIndex++;
     }
@@ -203,13 +214,13 @@ void Parser::whileIsDigit(std::string &line, std::size_t &newIndex) {
     }
 }
 
-void Parser::goAfterNextColon(std::string &line, std::size_t &newIndex) {
+void Parser::goAfterNextColon(const std::string &line, std::size_t &newIndex) {
     while (line[newIndex] != ':' && line[newIndex] != '#' && line[newIndex] != ';' && line[newIndex] != ' ' && newIndex < line.size() - 1) {
         newIndex++;
     }
 }
 
-void Parser::isEndOfLineValid(std::string &line, std::size_t &index, std::size_t &newIndex) {
+void Parser::isEndOfLineValid(const std::string &line, std::size_t &index, std::size_t &newIndex) {
     index = newIndex;
     while (line[newIndex] != ' ' && newIndex < line.size() - 1) {
         newIndex++;
