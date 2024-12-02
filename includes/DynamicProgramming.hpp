@@ -18,7 +18,7 @@ private:
     const bool                    _isTimeOpti;
     const std::set<std::string>   _optimizedStocks;
 
-    Process             _chooseOptiFinalProcess() const;
+    Process             _chooseOptiPath() const;
     std::vector<Stock>  _getPrimaryNeeds(const std::vector<Stock>& needs) const;
 
 public:

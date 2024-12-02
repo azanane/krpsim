@@ -40,6 +40,19 @@ void Process::addNeed(Stock stock) {
 
 void Process::addResult(Stock stock) {
     this->results.insert(stock);
+    
+}
+
+void Process::addProfit(Stock stock) {
+    
+    long needQuantity = 0;
+ 
+    if (this->needs.find(stock) != this->needs.end())
+        needQuantity = this->needs.find(stock)->getQuantity();
+
+    if (needQuantity < stock.getQuantity()) {
+        this->profits.insert(stock);
+    }
 }
 
 void Process::setCurrentDelay(unsigned long delay) {

@@ -5,7 +5,7 @@ DynamicProgramming::DynamicProgramming(const Krpsim& krpsim) : _stocks(krpsim.ge
 
 DynamicProgramming::~DynamicProgramming() {}
 
-Process DynamicProgramming::_chooseOptiFinalProcess() const {
+Process DynamicProgramming::_chooseOptiPath() const {
 
     const Stock optiStock = this->_stocks.find(this->_optimizedStocks.begin());
     const std::vector<Process> finalProcesses = optiStock.getAssociateProcesses();
@@ -15,8 +15,6 @@ Process DynamicProgramming::_chooseOptiFinalProcess() const {
     for (const Process& finalProcess : finalProcesses) {
 
         const std::vector<Stock> primaryNeeds = this->_getPrimaryNeeds(finalProcess.getNeeds()); 
-        
-    
     }
 
     return whichFinalProcess;

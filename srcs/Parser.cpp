@@ -176,7 +176,7 @@ void Parser::addStockFromPorcess(const std::string &line, Process &processTmp, s
         }
         stockTmp.setName(nameTmp);
         stockTmp.setQuantity(quantityTmp);
-        isNeed ? processTmp.addNeed(stockTmp) : processTmp.addResult(stockTmp);
+        isNeed ? processTmp.addNeed(stockTmp) : processTmp.addResult(stockTmp) && processTmp.addProfit();
     }
     index = newIndex;
 }

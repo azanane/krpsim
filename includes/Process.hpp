@@ -14,6 +14,7 @@ class Process {
         std::string         name;
         std::unordered_set<Stock, HashStock>  needs;
         std::unordered_set<Stock, HashStock>  results;
+        std::unordered_set<Stock, HashStock>  profits;
 
         unsigned long delay;
         unsigned long currentDelay;
@@ -33,6 +34,7 @@ class Process {
     void setDelay(unsigned long delay);
     void addNeed(Stock stock);
     void addResult(Stock stock);
+    void addProfit(Stock stock);
 };
 
 #endif
