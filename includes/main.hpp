@@ -4,5 +4,6 @@
 #include <iostream>
 #include "Krpsim.hpp"
 #include "DynamicProgramming.hpp"
+#include "Parser.hpp"
 
 #endif
