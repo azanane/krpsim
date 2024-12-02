@@ -127,15 +127,15 @@ void Parser::readOptimizedStock(std::string &line, std::size_t &index, std::size
     verifyNextChar(line, '(', index, newIndex);
     while (newIndex < line.size() - 1 && line[newIndex - 1] != ')') {
         readNextName(line, nameTmp, index, newIndex);
-        if (line[newIndex] == ')') {
-            break;
-        }
-        verifyNextChar(line, ';', index, newIndex);
         if (nameTmp == "time" && krpsim.getIsTimeOpti() != true) {
             krpsim.setIsTimeOpti(true);
         } else {
             krpsim.addOptimizedStocks(nameTmp);
         }
+        if (line[newIndex] == ')') {
+            break;
+        }
+        verifyNextChar(line, ';', index, newIndex);
     }
     verifyNextChar(line, ')', index, newIndex);
     isEndOfLineValid(line, index, --newIndex);
