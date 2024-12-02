@@ -57,7 +57,7 @@ void Parser::parseFile(std::ifstream& inputFile) {
         if (newIndex >= line.size()) {
             throw std::invalid_argument("Error for the line: " + line);
         }
-
+        verifyNextChar(line, ':', index, newIndex);
         if (nameTmp == "optimize") {
             // We are in the optimize case
             readOptimizedStock(line, index, newIndex);
@@ -77,7 +77,7 @@ void Parser::readStock(std::string &line, std::string &nameTmp, std::size_t &ind
     long   quantityTmp;
 
     readNextQuantity(line, quantityTmp, index, newIndex);
-    isEndOfStockAndProcessLineValid(line, index, newIndex);           
+    isEndOfLineValid(line, index, newIndex);           
 
     krpsim.addOrUpdateStock(Stock(nameTmp, quantityTmp));
 }
@@ -89,51 +89,64 @@ void Parser::readProcess(std::string &line, std::string &nameTmp, std::size_t &i
 
     processTmp.setName(nameTmp);
     
-    newIndex++;
+    verifyNextChar(line, '(', index, newIndex);
     // Read the needs
     addStockFromPorcess(line, processTmp, index, newIndex, true);
     if (processTmp.getNeeds().empty()) {
         throw std::invalid_argument("No needs were given for the process: " + processTmp.getName());
     }
-    newIndex += 2;
-    // Read the results
-    addStockFromPorcess(line, processTmp, index, newIndex, false);
-    if (processTmp.getResults().empty()) {
-        throw std::invalid_argument("No results were given for the process: " + processTmp.getName());
+    verifyNextChar(line, ')', index, newIndex);
+    verifyNextChar(line, ':', index, newIndex);
+    // Results can be empty
+    try {
+        verifyNextChar(line, '(', index, newIndex);
+        // Read the results
+        addStockFromPorcess(line, processTmp, index, newIndex, false);
+        if (processTmp.getResults().empty()) {
+            throw std::invalid_argument("No results were given for the process: " + processTmp.getName());
+        }
+        verifyNextChar(line, ')', index, newIndex);
+        verifyNextChar(line, ':', index, newIndex);
+    }
+    catch (std::exception e) {
+        if (!isdigit(line[newIndex])) {
+            throw std::invalid_argument("Error occured in line: " + line + ". Char \'" + line[newIndex] + "\' where given at index " + std::to_string(newIndex) + " instead of a delay");
+        }
     }
     // Read the delay;
-    if (newIndex < line.size() - 1 && line[newIndex] == ':') {
-        newIndex++;
-        readNextQuantity(line, quantityTmp, index, newIndex);
-        processTmp.setDelay(quantityTmp);
-    } else {
-        throw std::invalid_argument("No delay were given for the process: " + processTmp.getName());
-    }
-    isEndOfStockAndProcessLineValid(line, index, newIndex);
+    readNextQuantity(line, quantityTmp, index, newIndex);
+    processTmp.setDelay(quantityTmp);
+    isEndOfLineValid(line, index, newIndex);
 
     krpsim.addProcess(processTmp);
 }
 
 void Parser::readOptimizedStock(std::string &line, std::size_t &index, std::size_t &newIndex) {
     std::string nameTmp;
-    newIndex++;
+
+    verifyNextChar(line, '(', index, newIndex);
     while (newIndex < line.size() - 1 && line[newIndex - 1] != ')') {
         readNextName(line, nameTmp, index, newIndex);
+        if (line[newIndex] == ')') {
+            break;
+        }
+        verifyNextChar(line, ';', index, newIndex);
         if (nameTmp == "time" && krpsim.getIsTimeOpti() != true) {
             krpsim.setIsTimeOpti(true);
         } else {
             krpsim.addOptimizedStocks(nameTmp);
         }
     }
-    isEndOfOptiLineValid(line, index, --newIndex);
+    verifyNextChar(line, ')', index, newIndex);
+    isEndOfLineValid(line, index, --newIndex);
 }
 
 void Parser::readNextQuantity(std::string &line, long &quantity, std::size_t &index, std::size_t &newIndex) {
     index = newIndex;
     whileIsDigit(line, newIndex);
-    quantity = std::atoi(line.substr(index, newIndex - index).c_str());
+    quantity = std::atoi(line.substr(index, newIndex + 1 - index).c_str());
     if (quantity < 0) {
-        throw std::invalid_argument("Quantity: " + std::to_string(quantity) + " cannot be negative");
+        throw std::invalid_argument("Error occured ine line: " + line + ". Quantity: " + std::to_string(quantity) + " cannot be negative");
     }
 }
 
@@ -142,20 +155,42 @@ void Parser::addStockFromPorcess(std::string &line, Process &processTmp, std::si
     long        quantityTmp;
     Stock       stockTmp;
 
-    while (newIndex < line.size() - 1 && line[newIndex - 1] != ')') {
+    while (newIndex < line.size() - 1 && line[newIndex] != ')') {
         readNextName(line, nameTmp, index, newIndex);
+        verifyNextChar(line, ':', index, newIndex);
         readNextQuantity(line, quantityTmp, index, newIndex);
+        passChar(line, ' ', index, newIndex);
+        if (line[newIndex] != ')') {
+            verifyNextChar(line, ';', index, newIndex);
+        }
         stockTmp.setName(nameTmp);
         stockTmp.setQuantity(quantityTmp);
         isNeed ? processTmp.addNeed(stockTmp) : processTmp.addResult(stockTmp);
+    }
+    index = newIndex;
+}
+
+void Parser::passChar(std::string &line, char c, std::size_t &index, std::size_t &newIndex) {
+    while (line[newIndex] == c) {
         newIndex++;
     }
+    index = newIndex;
+}
+
+void Parser::verifyNextChar(std::string &line, char c, std::size_t &index, std::size_t &newIndex) {
+    passChar(line, ' ', index, newIndex);
+    if (line[newIndex] != c){
+        throw std::invalid_argument("Error occured in line: " + line + ". Char \'" + line[newIndex] + "\' where given at index " + std::to_string(newIndex) + " instead of char \'" + c + "\'");
+    } else {
+        passChar(line, c, index, newIndex);
+    }
+    passChar(line, ' ', index, newIndex);
 }
 
 void Parser::readNextName(std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex) {
     index = newIndex;
     goAfterNextColon(line, newIndex);
-    nameTmp = line.substr(index, newIndex - index - 1);
+    nameTmp = line.substr(index, newIndex - index);
     std::transform(nameTmp.begin(), nameTmp.end(), nameTmp.begin(), ::tolower);
 }
 
@@ -163,38 +198,23 @@ void Parser::whileIsDigit(std::string &line, std::size_t &newIndex) {
     if (line[newIndex] == '-') {
         newIndex++;
     }
-    while (std::isdigit(line[newIndex]) && newIndex < line.size()) {
+    while (std::isdigit(line[newIndex]) && newIndex < line.size() - 1) {
         newIndex++;
     }
 }
 
 void Parser::goAfterNextColon(std::string &line, std::size_t &newIndex) {
-    while (line[newIndex] != ':' && line[newIndex] != '#' && line[newIndex] != ';' && newIndex < line.size() - 1) {
+    while (line[newIndex] != ':' && line[newIndex] != '#' && line[newIndex] != ';' && line[newIndex] != ' ' && newIndex < line.size() - 1) {
         newIndex++;
     }
-    newIndex++;
 }
 
-void Parser::isEndOfStockAndProcessLineValid(std::string &line, std::size_t &index, std::size_t &newIndex) {
+void Parser::isEndOfLineValid(std::string &line, std::size_t &index, std::size_t &newIndex) {
     index = newIndex;
-    while (line[newIndex] != ' ' && newIndex < line.size()) {
+    while (line[newIndex] != ' ' && newIndex < line.size() - 1) {
         newIndex++;
     }
-    if (!(newIndex == line.size() || line[newIndex] == '#')) {
-        throw std::invalid_argument("Error for the line: " + line);
-    } 
-}
-
-void Parser::isEndOfOptiLineValid(std::string &line, std::size_t &index, std::size_t &newIndex) {
-    index = newIndex;
-    if (line[newIndex] != ')') {
-        throw std::invalid_argument("Wrong end of process or optimized line: " + line);
-    }
-    newIndex++;
-    while (line[newIndex] != ' ' && newIndex < line.size()) {
-        newIndex++;
-    }
-    if (!(newIndex == line.size() || line[newIndex] == '#')) {
+    if (!(newIndex == line.size() - 1 || line[newIndex] == '#')) {
         throw std::invalid_argument("Wrong end of process or optimzed line: " + line);
     } 
 }

@@ -25,6 +25,13 @@ public:
 
     void addProcess(std::string processName);
     void addProcesses(std::vector<std::string> processesName);
+
+    bool operator==(const Stock &stock) const; 
+};
+
+struct HashStock
+{
+    std::size_t operator()(const Stock &stock) const;
 };
 
 

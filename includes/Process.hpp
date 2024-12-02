@@ -2,30 +2,29 @@
 #ifndef PROCESSES_HPP
 #define PROCESSES_HPP
 
-#include <map>
 #include <vector>
 #include <string>
+#include <unordered_set>
 #include "Stock.hpp"
+
+struct HashStock;
 
 class Process {
     private:
         std::string         name;
-        std::vector<Stock>  needs;
-        std::vector<Stock>  results;
+        std::unordered_set<Stock, HashStock>  needs;
+        std::unordered_set<Stock, HashStock>  results;
 
         unsigned long delay;
         unsigned long currentDelay;
 
     public:
-
-
-
     Process();
     ~Process();
 
     std::string getName() const;
-    std::vector<Stock> getNeeds() const;
-    std::vector<Stock> getResults() const;
+    std::unordered_set<Stock, HashStock> getNeeds() const;
+    std::unordered_set<Stock, HashStock> getResults() const;
     unsigned long getDelay() const;
     unsigned long getCurrentDelay() const;
 
@@ -35,6 +34,5 @@ class Process {
     void addNeed(Stock stock);
     void addResult(Stock stock);
 };
-
 
 #endif

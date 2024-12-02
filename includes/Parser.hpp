@@ -22,8 +22,10 @@ private:
 
     void whileIsDigit(std::string &line, std::size_t &newIndex);
     void goAfterNextColon(std::string &line, std::size_t &newIndex);
-    void isEndOfOptiLineValid(std::string &line, std::size_t &index, std::size_t &newIndex);
-    void isEndOfStockAndProcessLineValid(std::string &line, std::size_t &index, std::size_t &newIndex);
+    void isEndOfLineValid(std::string &line, std::size_t &index, std::size_t &newIndex);
+
+    void verifyNextChar(std::string &line, char c, std::size_t &index, std::size_t &newIndex);
+    void passChar(std::string &line, char c, std::size_t &index, std::size_t &newIndex);
 
     void readNextName(std::string &line, std::string &nameTmp, std::size_t &index, std::size_t &newIndex);
     void readNextQuantity(std::string &line, long &quantity, std::size_t &index, std::size_t &newIndex);

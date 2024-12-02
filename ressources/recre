@@ -17,5 +17,5 @@ se_battre_dans_la_cours:(moi:1):(moi:1;bonbon:1):50
 # or maximize some products over a long delay
 # optimize:(time|stock1;time|stock2;...)
 #
-optimize:(marelle)
+optimize:(marelle;moi)
 #

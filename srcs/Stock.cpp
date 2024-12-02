@@ -35,3 +35,15 @@ void Stock::addProcesses(std::vector<std::string> processesName) {
         addProcess(processName);
     }
 }
+
+bool Stock::operator==(const Stock &stock) const{ 
+    if (stock.getName() == this->getName()) {
+        return true;
+    } 
+    return false;
+} 
+
+std::size_t HashStock::operator()(const Stock &stock) const {
+    std::size_t h1 = std::hash<std::string>{}(stock.getName());
+    return h1;
+}
