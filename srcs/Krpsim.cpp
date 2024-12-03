@@ -11,7 +11,7 @@ Krpsim::~Krpsim() {}
 std::map<std::string, Stock> Krpsim::getStocks() const {
     return stocks;
 }
-std::vector<Process>  Krpsim::getProcesses() const {
+std::map<std::string, Process> Krpsim::getProcesses() const {
     return processes;
 }
 std::vector<Process>  Krpsim::getInUsedProcess() const {
@@ -62,7 +62,7 @@ void Krpsim::updateStock(Stock stock, std::map<std::string, Stock>::iterator &it
 }
 
 void Krpsim::addProcess(Process process){
-    this->processes.push_back(process);
+    this->processes.insert({process.getName(), process});
 }
 
 void Krpsim::addInUsedProcess(Process process) {

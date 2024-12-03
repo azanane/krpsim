@@ -13,7 +13,7 @@ class Krpsim {
 
         // Stocks and processes        
         std::map<std::string, Stock> stocks;
-        std::vector<Process> processes;
+        std::map<std::string, Process> processes;
         std::vector<Process> inUsedProcess;
 
         // Optimization
@@ -30,7 +30,7 @@ class Krpsim {
         ~Krpsim();
 
         std::map<std::string, Stock> getStocks() const;
-        std::vector<Process> getProcesses() const;
+        std::map<std::string, Process> getProcesses() const;
         std::vector<Process> getInUsedProcess() const;
 
         // Optimization

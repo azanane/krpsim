@@ -26,6 +26,7 @@ class Process {
     std::string getName() const;
     std::unordered_set<Stock, HashStock> getNeeds() const;
     std::unordered_set<Stock, HashStock> getResults() const;
+    std::unordered_set<Stock, HashStock> getProfits() const;
     unsigned long getDelay() const;
     unsigned long getCurrentDelay() const;
 

@@ -1,39 +1,73 @@
 #include "DynamicProgramming.hpp"
 
-DynamicProgramming::DynamicProgramming(const Krpsim& krpsim) : _stocks(krpsim.getStocks()), _processes(krpsim.getProcesses()),
-    _optimizedStocks(krpsim.getOptimizedStocks()), _isTimeOpti(krpsim.getIsTimeOpti()) {}
+DynamicProgramming::DynamicProgramming(const Krpsim& krpsim) : _stocks(krpsim.getStocks()), _processes(krpsim.getProcesses()), _isTimeOpti(krpsim.getIsTimeOpti()), _optimizedStocks(krpsim.getOptimizedStocks()) {}
 
 DynamicProgramming::~DynamicProgramming() {}
 
-Process DynamicProgramming::_chooseOptiPath() const {
+// std::priority_queue< std::pair<std::list<Process>, cost>, cmpCost > 
 
-    const Stock optiStock = this->_stocks.find(this->_optimizedStocks.begin());
-    const std::vector<Process> finalProcesses = optiStock.getAssociateProcesses();
+void DynamicProgramming::_setAllPaths(std::list<Process> path, std::map<Process, std::list<std::list<Process>>> memo, std::list<Stock> neededStocks) {
 
-    Process whichFinalProcess = NULL;
+    for (Stock need : neededStocks) {
 
-    for (const Process& finalProcess : finalProcesses) {
+        if (memo.find(need)) {
+            return memo.find(need)->second;
+        }
 
-        const std::vector<Stock> primaryNeeds = this->_getPrimaryNeeds(finalProcess.getNeeds()); 
-    }
+        for (const std::string& needProcessName : need.getAssociateProcesses()) {
 
-    return whichFinalProcess;
-}
+            if (needProcessName != "") {
 
-std::vector<Stock> DynamicProgramming::_getPrimaryNeeds(const std::vector<Stock>& needs) const {
+                const Process& needProcess = this->_processes.find(needProcessName)->second;
 
-    std::vector<Stock>          primaryNeeds;
-    std::list<std::string>      visited;
-    // Pair between a path and its cost
-    std::pair<std::vector<Process>, float>  path;
+                if (memo.find(need)) {
+                    return memo.find(need)->second;
+                }
 
-    for (const Stock& need : needs) {
+                path.push_back(needProcess);
+                need.setQuantity(need.getQuantity() - needProcess.getProfits(need.getName()));
 
-        std::vector<Process> associateProcesses = need.getAssociateProcesses();
+                if (need.getQuantity > 0) {
 
-        for (const Process& associateProcess : associateProcesses) {
-
-            visited.push_back(associateProcess);
+                    
+                    this->_setAllPaths(path, memo, neededStocks);
+                }
+            }
         }
     }
+
+    this->_allPaths.insert(path);
 }
+
+// std::list<Process> DynamicProgramming::_chooseOptiPath() const {
+
+//     const Stock optiStock = this->_stocks.find(this->_optimizedStocks.begin());
+//     const std::vector<Process> finalProcesses = optiStock.getAssociateProcesses();
+
+//     std::list<Process> optiPath = NULL;
+
+//     for (const Process& finalProcess : finalProcesses) {
+
+//         const std::vector<Stock> primaryNeeds = this->_getPrimaryNeeds(finalProcess.getNeeds()); 
+//     }
+
+//     return optiPath;
+// }
+
+// std::vector<Stock> DynamicProgramming::_getPrimaryNeeds(const std::vector<Stock>& needs) const {
+
+//     std::vector<Stock>          primaryNeeds;
+//     std::list<std::string>      visited;
+//     // Pair between a path and its cost
+//     std::pair<std::vector<Process>, float>  path;
+
+//     for (const Stock& need : needs) {
+
+//         std::vector<Process> associateProcesses = need.getAssociateProcesses();
+
+//         for (const Process& associateProcess : associateProcesses) {
+
+//             visited.push_back(associateProcess);
+//         }
+//     }
+// }

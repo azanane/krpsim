@@ -18,6 +18,10 @@ std::unordered_set<Stock, HashStock> Process::getResults() const {
     return results;
 }
 
+std::unordered_set<Stock, HashStock> Process::getProfits() const {
+    return profits;
+}
+
 unsigned long Process::getDelay() const {
     return delay;
 }
