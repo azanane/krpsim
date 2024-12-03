@@ -47,11 +47,14 @@ void Process::addProfit(Stock stock) {
     
     long needQuantity = 0;
  
-    if (this->needs.find(stock) != this->needs.end())
+    if (this->needs.find(stock) != this->needs.end()) {
         needQuantity = this->needs.find(stock)->getQuantity();
+    }
 
     if (needQuantity < stock.getQuantity()) {
-        this->profits.insert(stock);
+
+        Stock newProfit(stock.getName(), stock.getQuantity() - needQuantity);        
+        this->profits.insert(newProfit);
     }
 }
 

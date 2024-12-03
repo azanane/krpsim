@@ -11,10 +11,10 @@ struct HashStock;
 
 class Process {
     private:
-        std::string         name;
-        std::unordered_set<Stock, HashStock>  needs;
-        std::unordered_set<Stock, HashStock>  results;
-        std::unordered_set<Stock, HashStock>  profits;
+        std::string                             name;
+        std::unordered_set<Stock, HashStock>    needs;
+        std::unordered_set<Stock, HashStock>    results;
+        std::unordered_set<Stock, HashStock>    profits;
 
         unsigned long delay;
         unsigned long currentDelay;
