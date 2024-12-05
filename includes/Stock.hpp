@@ -3,13 +3,14 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 class Stock
 {
 private:
-    std::string                 name;
-    long                        quantity;
-    std::vector<std::string>    associateProcesses;
+    std::string                     name;
+    long                            quantity;
+    std::map<std::string, long>     associateProcessesProfits;
 
 public:
     Stock();
@@ -18,15 +19,16 @@ public:
 
     std::string getName() const;
     long getQuantity() const;
-    std::vector<std::string> getAssociateProcesses() const;
+    std::map<std::string, long> getAssociateProcessesProfits() const;
 
     void setName(std::string name);
     void setQuantity(long quantity);
 
-    void addProcess(std::string processName);
-    void addProcesses(std::vector<std::string> processesName);
+    void addProcessProfits(std::pair<std::string, long> processName);
+    void addProcessesProfits(std::map<std::string, long> processesName);
 
-    bool operator==(const Stock &stock) const; 
+    bool operator==(const Stock &stock) const;
+    bool operator<(const Stock &stock) const; 
 };
 
 struct HashStock

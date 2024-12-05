@@ -1,42 +1,84 @@
 #include "DynamicProgramming.hpp"
 
-DynamicProgramming::DynamicProgramming(const Krpsim& krpsim) : _stocks(krpsim.getStocks()), _processes(krpsim.getProcesses()), _isTimeOpti(krpsim.getIsTimeOpti()), _optimizedStocks(krpsim.getOptimizedStocks()) {}
+DynamicProgramming::DynamicProgramming(const Krpsim& krpsim) : _stocks(krpsim.getStocks()), _processes(krpsim.getProcesses()), _isTimeOpti(krpsim.getIsTimeOpti()), _optimizedStocks(krpsim.getOptimizedStocks()) {
+
+
+    if (!this->_optimizedStocks.empty() && this->_processes.find(*this->_optimizedStocks.begin()) != this->_processes.end()) {
+
+        this->_setAllPaths();
+    }
+}
 
 DynamicProgramming::~DynamicProgramming() {}
 
 // std::priority_queue< std::pair<std::list<Process>, cost>, cmpCost > 
 
-void DynamicProgramming::_setAllPaths(std::list<Process> path, std::map<Process, std::list<std::list<Process>>> memo, std::list<Stock> neededStocks) {
+void DynamicProgramming::_setAllPaths() {
 
-    for (Stock need : neededStocks) {
+    for (std::set<std::string>::const_iterator itProcesses = this->_optimizedStocks.begin(); itProcesses != this->_optimizedStocks.end(); itProcesses++) {
 
-        if (memo.find(need)) {
-            return memo.find(need)->second;
-        }
+        if (this->_processes.find(*itProcesses) != this->_processes.end()) {
 
-        for (const std::string& needProcessName : need.getAssociateProcesses()) {
 
-            if (needProcessName != "") {
+            std::unordered_set<Stock, HashStock> stockSet = this->_processes.find(*itProcesses)->second.getNeeds();
+             
+            for (stockSetIterator itStock = stockSet.begin(); itStock != stockSet.end(); itStock++) {
 
-                const Process& needProcess = this->_processes.find(needProcessName)->second;
+                if (this->_allSolutionsStocks.find(*itStock) != this->_allSolutionsStocks.end()) {}
 
-                if (memo.find(need)) {
-                    return memo.find(need)->second;
-                }
 
-                path.push_back(needProcess);
-                need.setQuantity(need.getQuantity() - needProcess.getProfits(need.getName()));
-
-                if (need.getQuantity > 0) {
-
-                    
-                    this->_setAllPaths(path, memo, neededStocks);
-                }
             }
         }
     }
 
-    this->_allPaths.insert(path);
+    //     for (Stock need : neededStocks) {
+
+    //         if (memo.find(need) != memo.end()) {
+    //             // return memo.find(need)->second;
+    //         }
+
+    //         for (const std::string& needProcessName : need.getAssociateProcesses()) {
+
+    //             if (this->_processes.find(needProcessName) != this->_processes.end()) {
+
+    //                 const Process& needProcess = this->_processes.find(needProcessName)->second;
+
+    //                 // if (memo.find(need)) {
+    //                 //     return memo.find(need)->second;
+    //             // }
+
+    //             if (needProcess.getProfits().find(need) != needProcess.getProfits().end()) {
+
+    //                 path.push_back(needProcess);
+    //                 const stockSetIterator& profit = needProcess.getProfits().find(need);
+    //                 need.setQuantity(need.getQuantity() - profit->getQuantity());
+
+    //                 if (need.getQuantity() > 0) {
+
+    //                     this->_setAllPaths(path, memo, neededStocks);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    // }
+
+    // this->_allPaths.push_back(path);
+}
+
+std::list<std::list<Process>> DynamicProgramming::_getStockProcesses(const Stock& stock) const {
+
+    std::map<std::string, long> associateProcessesProfits = stock.getAssociateProcessesProfits();
+
+    for (const std::pair<std::string, long> processProfit : associateProcessesProfits) {
+
+        Stock stockTmp = stock;
+        stockTmp.setQuantity(stockTmp.getQuantity() - processProfit.second);
+        if (stockTmp.getQuantity() > 0) {
+
+            this->_getStockProcesses(stockTmp);
+        }
+    }
 }
 
 // std::list<Process> DynamicProgramming::_chooseOptiPath() const {

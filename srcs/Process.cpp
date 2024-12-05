@@ -18,7 +18,7 @@ std::unordered_set<Stock, HashStock> Process::getResults() const {
     return results;
 }
 
-std::unordered_set<Stock, HashStock> Process::getProfits() const {
+const std::unordered_set<Stock, HashStock>& Process::getProfits() const {
     return profits;
 }
 

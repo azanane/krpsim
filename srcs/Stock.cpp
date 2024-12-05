@@ -14,8 +14,8 @@ std::string Stock::getName() const {
 long Stock::getQuantity() const {
     return quantity;
 }
-std::vector<std::string> Stock::getAssociateProcesses() const {
-    return associateProcesses;
+std::map<std::string, long> Stock::getAssociateProcessesProfits() const {
+    return associateProcessesProfits;
 }
 
 void Stock::setName(std::string name) {
@@ -26,22 +26,29 @@ void Stock::setQuantity(long quantity) {
     this->quantity = quantity;
 }
 
-void Stock::addProcess(std::string processName) {
-    associateProcesses.push_back(processName);
+void Stock::addProcessProfits(std::pair<std::string, long> processName) {
+    associateProcessesProfits.insert(processName);
 }
 
-void Stock::addProcesses(std::vector<std::string> processesName) {
-    for (std::string processName : processesName) {
-        addProcess(processName);
+void Stock::addProcessesProfits(std::map<std::string, long> processesName) {
+    for (std::pair<std::string, long> processName : processesName) {
+        addProcessProfits(processName);
     }
 }
 
 bool Stock::operator==(const Stock &stock) const{ 
-    if (stock.getName() == this->getName()) {
+    if (stock.getName() == this->getName() && stock.getQuantity() == stock.getQuantity()) {
         return true;
     } 
     return false;
-} 
+}
+
+bool Stock::operator<(const Stock &stock) const{ 
+    if (stock.getQuantity() < this->getQuantity()) {
+        return true;
+    } 
+    return false;
+}
 
 std::size_t HashStock::operator()(const Stock &stock) const {
     std::size_t h1 = std::hash<std::string>{}(stock.getName());

@@ -58,7 +58,7 @@ void Krpsim::addStock(Stock stock) {
 
 void Krpsim::updateStock(Stock stock, std::map<std::string, Stock>::iterator &it) {
     it->second.setQuantity(stock.getQuantity());
-    it->second.addProcesses(stock.getAssociateProcesses());
+    it->second.addProcessesProfits(stock.getAssociateProcessesProfits());
 }
 
 void Krpsim::addProcess(Process process){

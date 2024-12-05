@@ -8,7 +8,9 @@ int main(int argc, char **argv) {
 
     Parser parser = Parser(std::string(argv[1]), std::string(argv[2]));
 
+    Krpsim krp = parser.getKrspim();
 
+    // DynamicProgramming dyn(krp);
 
     return 0;
 }

@@ -240,21 +240,37 @@ void Parser::isEndOfLineValid(const std::string &line, std::size_t &index, std::
 
 void Parser::initializeStock() {
     std::map<std::string, Stock> stocks = krpsim.getStocks();
-    for (Process process : krpsim.getProcesses()) {
-        for (Stock stock : process.getNeeds()) {
+    for (std::pair<std::string, Process> process : krpsim.getProcesses()) {
+        
+        std::map<std::string, Stock> needs;
+        
+        for (Stock stock : process.second.getNeeds()) {
+
+            needs.insert({stock.getName(), stock});
+
             if (stocks.find(stock.getName()) == stocks.end()) {
                 stock.setQuantity(0);
                 krpsim.addStock(stock);
             }
         }
-        for (Stock stock : process.getResults()) {
+        for (Stock stock : process.second.getResults()) {
+
+            std::map<std::string, Stock>::iterator needIterator = needs.find(stock.getName());
+
+            if (needIterator == needs.end()) {
+                stock.addProcessProfits({process.second.getName(), stock.getQuantity()});                    
+            }
+            else if (needIterator->second.getQuantity() < stock.getQuantity()) {
+                stock.addProcessProfits({process.second.getName(), stock.getQuantity() - needIterator->second.getQuantity()});
+            }
+
             std::map<std::string, Stock>::iterator it = stocks.find(stock.getName());
             if (it == stocks.end()) {
                 stock.setQuantity(0);
             } else {
                 stock.setQuantity(it->second.getQuantity());
             }
-            stock.addProcess(process.getName());
+
             krpsim.addOrUpdateStock(stock);
         }
     }
