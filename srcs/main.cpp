@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
 
     Krpsim krp = parser.getKrspim();
 
-    // DynamicProgramming dyn(krp);
+    DynamicProgramming dyn(krp);
 
     return 0;
 }

@@ -2,8 +2,7 @@
 
 DynamicProgramming::DynamicProgramming(const Krpsim& krpsim) : _stocks(krpsim.getStocks()), _processes(krpsim.getProcesses()), _isTimeOpti(krpsim.getIsTimeOpti()), _optimizedStocks(krpsim.getOptimizedStocks()) {
 
-
-    if (!this->_optimizedStocks.empty() && this->_processes.find(*this->_optimizedStocks.begin()) != this->_processes.end()) {
+    if (!this->_optimizedStocks.empty()) {
 
         this->_setAllPaths();
     }
@@ -15,101 +14,58 @@ DynamicProgramming::~DynamicProgramming() {}
 
 void DynamicProgramming::_setAllPaths() {
 
-    for (std::set<std::string>::const_iterator itProcesses = this->_optimizedStocks.begin(); itProcesses != this->_optimizedStocks.end(); itProcesses++) {
+    for (std::set<std::string>::const_iterator itStockOpti = this->_optimizedStocks.begin(); itStockOpti != this->_optimizedStocks.end(); itStockOpti++) {
 
-        if (this->_processes.find(*itProcesses) != this->_processes.end()) {
+        std::map<std::string, Stock>::const_iterator stockFind = this->_stocks.find(*itStockOpti);
+        std::map<std::string, long> processesMap = this->_stocks.find(*itStockOpti)->second.getAssociateProcessesProfits();
 
+        // if the stock to optimize do exists and if it have associate processes
+        if (stockFind != this->_stocks.end() && !processesMap.empty()) {
 
-            std::unordered_set<Stock, HashStock> stockSet = this->_processes.find(*itProcesses)->second.getNeeds();
-             
-            for (stockSetIterator itStock = stockSet.begin(); itStock != stockSet.end(); itStock++) {
+            // if (this->_allSolutionsStocks.find(*itStockOpti) != this->_allSolutionsStocks.end()) {}
 
-                if (this->_allSolutionsStocks.find(*itStock) != this->_allSolutionsStocks.end()) {}
+            Stock stockToResolve = stockFind->second;
 
+            for (std::map<std::string, long>::const_iterator itProcessesOpti = processesMap.begin(); itProcessesOpti != processesMap.end(); itProcessesOpti++) {
 
+                std::map<std::string, Process>::const_iterator processFind = this->_processes.find(itProcessesOpti->first);
+                if (processFind != this->_processes.end()) {
+
+                    const Process& processParent = processFind->second;
+
+                    stockToResolve.setQuantity(itProcessesOpti->second);
+                    this->_getStockProcesses(stockToResolve, processParent, -1);
+                }
             }
         }
     }
-
-    //     for (Stock need : neededStocks) {
-
-    //         if (memo.find(need) != memo.end()) {
-    //             // return memo.find(need)->second;
-    //         }
-
-    //         for (const std::string& needProcessName : need.getAssociateProcesses()) {
-
-    //             if (this->_processes.find(needProcessName) != this->_processes.end()) {
-
-    //                 const Process& needProcess = this->_processes.find(needProcessName)->second;
-
-    //                 // if (memo.find(need)) {
-    //                 //     return memo.find(need)->second;
-    //             // }
-
-    //             if (needProcess.getProfits().find(need) != needProcess.getProfits().end()) {
-
-    //                 path.push_back(needProcess);
-    //                 const stockSetIterator& profit = needProcess.getProfits().find(need);
-    //                 need.setQuantity(need.getQuantity() - profit->getQuantity());
-
-    //                 if (need.getQuantity() > 0) {
-
-    //                     this->_setAllPaths(path, memo, neededStocks);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-    // }
-
-    // this->_allPaths.push_back(path);
 }
 
-std::list<std::list<Process>> DynamicProgramming::_getStockProcesses(const Stock& stock) const {
+std::list<Process> DynamicProgramming::_getStockProcesses(const Stock& stockToResolve, const Process& processParent, long quantityNeeded) const {
 
-    std::map<std::string, long> associateProcessesProfits = stock.getAssociateProcessesProfits();
+    const std::unordered_set<Stock, HashStock>& needs = processParent.getNeeds();
+    for (const Stock& need : needs) {
 
-    for (const std::pair<std::string, long> processProfit : associateProcessesProfits) {
+        std::map<std::string, long> processesNames = need.getAssociateProcessesProfits();
 
-        Stock stockTmp = stock;
-        stockTmp.setQuantity(stockTmp.getQuantity() - processProfit.second);
-        if (stockTmp.getQuantity() > 0) {
+        // if we get more than 1 new process we can execute, we get a whole new path in our tree, so we duplicate the existants solutions
+        if (processesNames.size() > 1) {
+            
+        }
 
-            this->_getStockProcesses(stockTmp);
+        for (const std::pair<std::string, long>& processInfos : processesNames) {
+
+            const std::map<std::string, Process>::const_iterator& processFind = this->_processes.find(processInfos.second);
+            if (processFind != this->_processes.end()) {
+
+                quantityNeeded = quantityNeeded - processInfos.second;
+                if (quantityNeeded > 0) {
+                    this->_getStockProcesses(stockToResolve, processFind->second, quantityNeeded);
+                }
+                else {
+                    this->_getStockProcesses(stockToResolve, processFind->second, quantityNeeded);
+                }
+            }
         }
     }
 }
-
-// std::list<Process> DynamicProgramming::_chooseOptiPath() const {
-
-//     const Stock optiStock = this->_stocks.find(this->_optimizedStocks.begin());
-//     const std::vector<Process> finalProcesses = optiStock.getAssociateProcesses();
-
-//     std::list<Process> optiPath = NULL;
-
-//     for (const Process& finalProcess : finalProcesses) {
-
-//         const std::vector<Stock> primaryNeeds = this->_getPrimaryNeeds(finalProcess.getNeeds()); 
-//     }
-
-//     return optiPath;
-// }
-
-// std::vector<Stock> DynamicProgramming::_getPrimaryNeeds(const std::vector<Stock>& needs) const {
-
-//     std::vector<Stock>          primaryNeeds;
-//     std::list<std::string>      visited;
-//     // Pair between a path and its cost
-//     std::pair<std::vector<Process>, float>  path;
-
-//     for (const Stock& need : needs) {
-
-//         std::vector<Process> associateProcesses = need.getAssociateProcesses();
-
-//         for (const Process& associateProcess : associateProcesses) {
-
-//             visited.push_back(associateProcess);
-//         }
-//     }
-// }
