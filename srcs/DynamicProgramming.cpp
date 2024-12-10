@@ -34,14 +34,14 @@ void DynamicProgramming::_setAllPaths() {
                     const Process& processParent = processFind->second;
 
                     stockToResolve.setQuantity(itProcessesOpti->second);
-                    this->_getStockProcesses(stockToResolve, processParent, -1);
+                    this->_getStockProcesses(stockToResolve, processParent, stockToResolve.getQuantity());
                 }
             }
         }
     }
 }
 
-std::list<Process> DynamicProgramming::_getStockProcesses(const Stock& stockToResolve, const Process& processParent, long quantityNeeded) const {
+void DynamicProgramming::_getStockProcesses(const Stock& stockToResolve, const Process& processParent, long quantityNeeded) const {
 
     const std::unordered_set<Stock, HashStock>& needs = processParent.getNeeds();
     for (const Stock& need : needs) {
@@ -49,21 +49,19 @@ std::list<Process> DynamicProgramming::_getStockProcesses(const Stock& stockToRe
         std::map<std::string, long> processesNames = need.getAssociateProcessesProfits();
 
         // if we get more than 1 new process we can execute, we get a whole new path in our tree, so we duplicate the existants solutions
-        if (processesNames.size() > 1) {
-            
-        }
+        if (processesNames.size() > 1) {}
 
-        for (const std::pair<std::string, long>& processInfos : processesNames) {
+        for (std::map<std::string, long>::const_iterator processInfos = processesNames.begin(); processInfos != processesNames.end(); processInfos++) {
 
-            const std::map<std::string, Process>::const_iterator& processFind = this->_processes.find(processInfos.second);
+            const std::map<std::string, Process>::const_iterator& processFind = this->_processes.find(processInfos->first);
             if (processFind != this->_processes.end()) {
 
-                quantityNeeded = quantityNeeded - processInfos.second;
+                long newQuantityNeeded = quantityNeeded - processInfos->second;
                 if (quantityNeeded > 0) {
-                    this->_getStockProcesses(stockToResolve, processFind->second, quantityNeeded);
+                    this->_getStockProcesses(stockToResolve, processFind->second, newQuantityNeeded);
                 }
                 else {
-                    this->_getStockProcesses(stockToResolve, processFind->second, quantityNeeded);
+                    this->_getStockProcesses(stockToResolve, processFind->second, newQuantityNeeded);
                 }
             }
         }
