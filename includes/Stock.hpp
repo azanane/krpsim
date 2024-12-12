@@ -36,6 +36,4 @@ struct HashStock
     std::size_t operator()(const Stock &stock) const;
 };
 
-
-
 #endif

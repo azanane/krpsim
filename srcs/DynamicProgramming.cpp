@@ -31,39 +31,66 @@ void DynamicProgramming::_setAllPaths() {
                 std::map<std::string, Process>::const_iterator processFind = this->_processes.find(itProcessesOpti->first);
                 if (processFind != this->_processes.end()) {
 
-                    const Process& processParent = processFind->second;
+                    // const Process& processParent = processFind->second;
+                    std::unordered_set<Stock, HashStock> needs = processFind->second.getNeeds();
+                    for (Stock need : needs) {
 
-                    stockToResolve.setQuantity(itProcessesOpti->second);
-                    this->_getStockProcesses(stockToResolve, processParent, stockToResolve.getQuantity());
+                        // Want to change the way to get associate processes (need to find a way to include adsociateProcessProfits in needs)
+                        std::map<std::string, Stock>::const_iterator getAssociateProcesses = this->_stocks.find(need.getName());
+                        if (getAssociateProcesses != this->_stocks.end()) {
+
+                            need.addProcessesProfits(getAssociateProcesses->second.getAssociateProcessesProfits());
+                            this->_getStockProcesses(need);
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-void DynamicProgramming::_getStockProcesses(const Stock& stockToResolve, const Process& processParent, long quantityNeeded) const {
+std::list<std::list<std::string>> DynamicProgramming::_getStockProcesses(const Stock& stockToResolve) {
 
-    const std::unordered_set<Stock, HashStock>& needs = processParent.getNeeds();
-    for (const Stock& need : needs) {
+    std::map<std::pair<std::string,long>, std::list<std::list<std::string>>>::const_iterator solutionAlreadyExist = this->_allSolutionsStocks.find({stockToResolve.getName(), stockToResolve.getQuantity()});
+    if (solutionAlreadyExist != this->_allSolutionsStocks.end()) {
 
-        std::map<std::string, long> processesNames = need.getAssociateProcessesProfits();
+        return solutionAlreadyExist->second;
+    }
 
-        // if we get more than 1 new process we can execute, we get a whole new path in our tree, so we duplicate the existants solutions
-        if (processesNames.size() > 1) {}
+    std::map<std::string, long> processesProfits = stockToResolve.getAssociateProcessesProfits();
+    std::list<std::list<std::string>> allStockSolutions;
 
-        for (std::map<std::string, long>::const_iterator processInfos = processesNames.begin(); processInfos != processesNames.end(); processInfos++) {
+    for (std::map<std::string, long>::const_iterator processProfits = processesProfits.begin(); processProfits != processesProfits.end(); processProfits++) {
 
-            const std::map<std::string, Process>::const_iterator& processFind = this->_processes.find(processInfos->first);
-            if (processFind != this->_processes.end()) {
+        // find the process that give us a profit for the needed stock
+        std::map<std::string, Process>::const_iterator processFind = this->_processes.find(processProfits->first);
+        if (processFind != this->_processes.end()) {
 
-                long newQuantityNeeded = quantityNeeded - processInfos->second;
-                if (quantityNeeded > 0) {
-                    this->_getStockProcesses(stockToResolve, processFind->second, newQuantityNeeded);
+            long newQuantity = stockToResolve.getQuantity() - processProfits->second;
+
+            if (newQuantity > 0) {
+
+                Stock newStockToResolve(stockToResolve.getName(), newQuantity);
+                newStockToResolve.addProcessesProfits(stockToResolve.getAssociateProcessesProfits());
+                std::list<std::list<std::string>> newSolutions = this->_getStockProcesses(newStockToResolve);
+                
+                // create new branchs im my tree
+                for (std::list<std::string> newSolution : newSolutions) {
+
+                    newSolution.push_front(processProfits->first);
+                    allStockSolutions.push_back(newSolution);
                 }
-                else {
-                    this->_getStockProcesses(stockToResolve, processFind->second, newQuantityNeeded);
-                }
+            }
+            else {
+
+                std::list<std::string> newSolution;
+                newSolution.push_back(processProfits->first);
+                allStockSolutions.push_back(newSolution);
             }
         }
     }
+
+    this->_allSolutionsStocks.insert({{stockToResolve.getName(), stockToResolve.getQuantity()}, allStockSolutions});
+
+    return allStockSolutions;
 }

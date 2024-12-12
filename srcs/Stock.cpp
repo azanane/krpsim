@@ -36,15 +36,9 @@ void Stock::addProcessesProfits(std::map<std::string, long> processesName) {
     }
 }
 
-bool Stock::operator==(const Stock &stock) const{ 
-    if (stock.getName() == this->getName() && stock.getQuantity() == stock.getQuantity()) {
-        return true;
-    } 
-    return false;
-}
+bool Stock::operator==(const Stock &stock) const {
 
-bool Stock::operator<(const Stock &stock) const{ 
-    if (stock.getQuantity() < this->getQuantity()) {
+    if (stock.getName() == this->getName() && stock.getQuantity() == this->getQuantity()) {
         return true;
     } 
     return false;

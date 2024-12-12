@@ -184,7 +184,6 @@ void Parser::addStockFromPorcess(const std::string &line, Process &processTmp, s
             processTmp.addResult(stockTmp);
             processTmp.addProfit(stockTmp);
         }
-
     }
     index = newIndex;
 }
