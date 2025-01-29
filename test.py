@@ -6,14 +6,14 @@ import copy
 
 
 class QLearning:
-    def __init__(self, stocks, processes, q_table, optimized_processes=["marelle", "moi"]):
+    def __init__(self, stocks, processes, q_table, optimized_processes=["euro"]):
         self.stocks = stocks
         self.processes = processes
         self.q_table = q_table
 
         # Hyperparameters
-        self.alpha = 0.1
-        self.gamma = 0.8
+        self.alpha = 0.2
+        self.gamma = 0.9
         self.epsilon = 0.2
 
         # For plotting metrics
@@ -27,6 +27,7 @@ class QLearning:
         self.state = 0
         self.reward = 0
         self.current_delay = 10
+        self.action = 0
 
         self.learning()
 
@@ -77,10 +78,12 @@ class QLearning:
     def get_reward(self, process_index): 
         if process_index not in self.state :
             return -100
-        elif not self.processes[process_index].results:
-            return -100
+        elif self.processes[process_index].needs and not self.processes[process_index].results:
+            return -50
 
         reward = 0
+        if process_index > 0:
+            reward = 10
 
         for key, value in self.processes[process_index].needs.items() :
             if key in self.optimized_processes :
@@ -88,13 +91,13 @@ class QLearning:
 
         for key, value in self.processes[process_index].results.items() :
             if key in self.optimized_processes :
-                reward += 10 * value
+                reward += 50 * value
 
         return reward 
 
     def run_process(self, process_index):
         process = copy.copy(self.processes[process_index])
-        if process_index in self.state:
+        if process_index in self.state and process_index != 0:
             for key, value in process.needs.items():
                 stock[key] -= value
             process.delay += self.current_delay
@@ -102,20 +105,21 @@ class QLearning:
         reward = self.get_reward(process_index)
 
         next_state = self.get_state()
+        self.action += 1
 
         return next_state, reward
 
     def learning(self):
         for i in range(1, 1000):
-            self.state = (0,) # or random state
-
             self.epochs, self.reward = 0, 0
             available_proccess = self.get_state()
             self.state = tuple(available_proccess)
+            process_index = -1
 
-
-            while self.current_proccesses or available_proccess:
-                if not available_proccess:
+            while self.current_proccesses or self.state != (0,):
+                if 15 in self.state or 16 in self.state or 17 in self.state or 18 in self.state:
+                    print ("oui")
+                if self.state == (0,) or process_index == 0:
                     self.update_stock_and_time()
 
                 if random.uniform(0, 1) < self.epsilon:
@@ -135,6 +139,8 @@ class QLearning:
                 self.state = next_state
                 available_proccess = next_state
                 self.epochs += 1
+                if self.epochs % 500000 == 0:
+                    self.epsilon -= 0.1
         
             if i % 100 == 0:
                 # clear_output(wait=True)
@@ -156,17 +162,48 @@ class Process:
         return self.delay < other.delay
 
 stock = {
-    "bonbon": 10,
-    "moi": 1,
-    "marelle": 0
+    "four": 10,
+    "euro": 10000,
+    "pomme": 0,
+    "citron": 0,
+    "oeuf": 0,
+    "farine": 0,
+    "beurre": 0,
+    "lait": 0,
+    "jaune_oeuf": 0,
+    "blanc_oeuf": 0,
+    "pate_sablee": 0,
+    "pate_feuilletee": 0,
+    "tarte_citron": 0,
+    "tarte_pomme": 0,
+    "flan": 0,
+    "boite": 100
 }
 
 processes = []
-processes.append(Process("manger", {"bonbon": 1}, {}, 10))
-processes.append(Process("jouer_a_la_marelle", {"bonbon": 5, "moi": 1}, {"moi": 1, "marelle": 1}, 20))
-processes.append(Process("parier_avec_un_copain", {"bonbon": 2, "moi": 1}, {"moi": 1, "bonbon": 3}, 10))
-processes.append(Process("parier_avec_un_autre_copain", {"bonbon": 2, "moi": 1}, {"moi": 1, "bonbon": 1}, 10))
-processes.append(Process("se_battre_dans_la_cours", {"moi": 1}, {"moi": 1, "bonbon": 1}, 50))
+processes.append(Process("rien_faire", {}, {}, 0))
+processes.append(Process("buy_pomme", {"euro": 100}, {"pomme": 700}, 200))
+processes.append(Process("buy_citron", {"euro": 100}, {"citron": 400}, 200))
+processes.append(Process("buy_oeuf", {"euro": 100}, {"oeuf": 100}, 200))
+processes.append(Process("buy_farine", {"euro": 100}, {"farine": 800}, 200))
+processes.append(Process("buy_beurre", {"euro": 100}, {"beurre": 2000}, 200))
+processes.append(Process("buy_lait", {"euro": 100}, {"lait": 2000}, 200))
+
+processes.append(Process("separation_oeuf", {"oeuf": 1}, {"jaune_oeuf": 1, "blanc_oeuf": 1}, 2))
+processes.append(Process("reunion_oeuf", {"jaune_oeuf": 1, "blanc_oeuf": 1}, {"oeuf": 1}, 1))
+processes.append(Process("do_pate_sablee", {"oeuf": 5, "farine": 100, "beurre": 4, "lait": 5}, {"pate_sablee": 300, "blanc_oeuf": 3}, 300))
+processes.append(Process("do_pate_feuilletee", {"oeuf": 3, "farine": 200, "beurre": 10, "lait": 2}, {"pate_feuilletee": 100}, 800))
+processes.append(Process("do_tarte_citron", {"pate_feuilletee": 100, "citron": 50, "blanc_oeuf": 5, "four": 1}, {"tarte_citron": 5, "four": 1}, 60))
+processes.append(Process("do_tarte_pomme", {"pate_sablee": 100, "pomme": 30, "four": 1}, {"tarte_pomme": 8, "four": 1}, 50))
+processes.append(Process("do_flan", {"jaune_oeuf": 10, "lait": 4, "four": 1}, {"flan": 5, "four": 1}, 300))
+processes.append(Process("do_boite", {"tarte_citron": 3, "tarte_pomme": 7, "flan": 1, "euro": 30}, {"boite": 1}, 1))
+processes.append(Process("vente_boite", {"boite": 100}, {"euro": 55000}, 30))
+processes.append(Process("vente_tarte_pomme", {"tarte_pomme": 10}, {"euro": 100}, 30))
+processes.append(Process("vente_tarte_citron", {"tarte_citron": 10}, {"euro": 200}, 30))
+processes.append(Process("vente_flan", {"flan": 10}, {"euro": 300}, 30))
+
+
+
 
 q_table = {}
 
