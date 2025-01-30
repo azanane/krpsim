@@ -89,9 +89,9 @@ class QLearning:
         reward = -20
 
         processTmp = self.processes[process_index]
-        for key_process, value_process in processTmp.results.items():
-            if key_process in self.optimized_process_needs:
-                reward = 30
+        # for key_process, value_process in processTmp.results.items():
+        #     if key_process in self.optimized_process_needs:
+        #         reward = 30
 
         if processTmp in self.optimized_processes:
             for key, value in processTmp.results.items():
@@ -135,8 +135,6 @@ class QLearning:
             'vente_tarte_citron' : 0,
             'vente_flan' : 0,
         }
-        epochs = []
-        action_history = {key: [] for key in action.keys()}
         self.epochs = 1
 
         for i in range(1, 6):
@@ -151,27 +149,24 @@ class QLearning:
                 # if 15 in self.state or 16 in self.state or 17 in self.state or 18 in self.state:
                 # if process_index in [15, 14, 13, 11, 17, 18] and process_index in self.state:
                 #     print (self.processes[process_index].name)
-
-                if process_index == 0:
-                    stateTmp = copy.copy(self.state)
-                    while stateTmp == self.state and self.current_proccesses != []:
-                        self.update_stock_and_time()
-                    self.update_q_table(process_index)
               
                 if random.uniform(0, 1) < self.epsilon:
                     process_index = random.randint(0, len(self.processes) - 1) # Explore process space
                 else:
                     process_index = np.argmax(self.q_table[self.state]) # Exploit learned values
+                
 
                 print(f'For state: ${self.state}, better action is ${self.processes[np.argmax(self.q_table[self.state])].name} and action taken is ${self.processes[process_index].name}')
                 if self.processes[process_index].name in ["vente_boite", "vente_tarte_pomme", "vente_tarte_citron", "vente_flan"]:
                     action[self.processes[process_index].name] += 1
 
+                if process_index == 0:
+                    stateTmp = copy.copy(self.state)
+                    while stateTmp == self.state and self.current_proccesses != []:
+                        self.update_stock_and_time()
+
                 self.update_q_table(process_index)
 
-                epochs.append(self.epochs)
-                for key in action.keys():
-                    action_history[key].append(action[key])
                 self.epochs += 1
                 # if self.epochs % 500000 == 0:
                 #     self.epsilon -= 0.1
@@ -184,17 +179,6 @@ class QLearning:
                 print(f"Episode: {i}")
 
             print("Training finished.\n")
-        plt.figure(figsize=(10, 6))
-        for key, values in action_history.items():
-            plt.plot(epochs, values, label=key, linewidth=2)
-
-        plt.xlabel("Epochs")
-        plt.ylabel("Action Count")
-        plt.title("Action Selection Over Time")
-        plt.legend()
-        plt.grid()
-        plt.show()  
-        print("end")
         
         
 
