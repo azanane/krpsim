@@ -3,6 +3,7 @@ import numpy as np
 import heapq
 import random
 import copy
+import matplotlib.pyplot as plt
 
 
 class QLearning:
@@ -12,7 +13,7 @@ class QLearning:
         self.q_table = q_table
 
         # Hyperparameters
-        self.alpha = 0.2
+        self.alpha = 0.4
         self.gamma = 0.9
         self.epsilon = 0.2
 
@@ -21,9 +22,14 @@ class QLearning:
         self.all_penalties = []
 
         self.current_proccesses = []  # This will be our priority queue (min-heap)
-        self.optimized_processes = optimized_processes 
-
-
+        self.optimized_index = [15, 16, 17, 18]
+        self.optimized_process_needs = []
+        self.optimized_process_name = ['euro']
+        self.optimized_processes = [process for index, process in enumerate(processes) if index in self.optimized_index]
+        for process in self.optimized_processes:
+            for key, value in process.needs.items():
+                self.optimized_process_needs.append(key)
+        
         self.state = 0
         self.reward = 0
         self.current_delay = 10
@@ -55,7 +61,6 @@ class QLearning:
         for process in smallest_process:
             for key, value in process.results.items():
                 self.stocks[key] += value
-        self.state = self.get_state()
 
     def get_state(self):
         state = []
@@ -76,77 +81,120 @@ class QLearning:
         return tuple(state)
 
     def get_reward(self, process_index): 
-        if process_index not in self.state :
+        if process_index not in self.state:
             return -100
         elif self.processes[process_index].needs and not self.processes[process_index].results:
-            return -50
+            return -100
 
-        reward = 0
-        if process_index > 0:
-            reward = 10
+        reward = -20
 
-        for key, value in self.processes[process_index].needs.items() :
-            if key in self.optimized_processes :
-                reward -= 10 * value
+        processTmp = self.processes[process_index]
+        for key_process, value_process in processTmp.results.items():
+            if key_process in self.optimized_process_needs:
+                reward = 30
 
-        for key, value in self.processes[process_index].results.items() :
-            if key in self.optimized_processes :
-                reward += 50 * value
+        if processTmp in self.optimized_processes:
+            for key, value in processTmp.results.items():
+                if key in self.optimized_process_name:
+                    reward = 5 * value
 
-        return reward 
+        return reward
 
     def run_process(self, process_index):
         process = copy.copy(self.processes[process_index])
+        reward = self.get_reward(process_index)
+
         if process_index in self.state and process_index != 0:
             for key, value in process.needs.items():
-                stock[key] -= value
+                self.stocks[key] -= value
             process.delay += self.current_delay
             heapq.heappush(self.current_proccesses, process)
-        reward = self.get_reward(process_index)
 
         next_state = self.get_state()
         self.action += 1
 
         return next_state, reward
 
+    def update_q_table(self, process_index):
+        next_state, reward = self.run_process(process_index)
+        
+        old_value = self.q_table[self.state][process_index]
+        next_max = np.argmax(self.q_table[next_state])
+
+        new_value = (1 - self.alpha) * old_value + self.alpha * (reward + self.gamma * next_max)
+        self.q_table[self.state][process_index] = new_value
+
+        self.state = next_state
+
+
     def learning(self):
-        for i in range(1, 1000):
-            self.epochs, self.reward = 0, 0
-            available_proccess = self.get_state()
-            self.state = tuple(available_proccess)
+        stockTmp = copy.copy(self.stocks)
+        action = {
+            'vente_boite' : 0,
+            'vente_tarte_pomme' : 0,
+            'vente_tarte_citron' : 0,
+            'vente_flan' : 0,
+        }
+        epochs = []
+        action_history = {key: [] for key in action.keys()}
+        self.epochs = 1
+
+        for i in range(1, 6):
+            self.state = self.get_state()
             process_index = -1
 
-            while self.current_proccesses or self.state != (0,):
-                if 15 in self.state or 16 in self.state or 17 in self.state or 18 in self.state:
-                    print ("oui")
-                if self.state == (0,) or process_index == 0:
-                    self.update_stock_and_time()
+            self.current_delay = 0
+            self.current_proccesses = []
+            self.epochs += 1
 
+            while (self.current_proccesses or self.state != (0,)) and self.epochs % 500000 != 0:
+                # if 15 in self.state or 16 in self.state or 17 in self.state or 18 in self.state:
+                # if process_index in [15, 14, 13, 11, 17, 18] and process_index in self.state:
+                #     print (self.processes[process_index].name)
+
+                if process_index == 0:
+                    stateTmp = copy.copy(self.state)
+                    while stateTmp == self.state and self.current_proccesses != []:
+                        self.update_stock_and_time()
+                    self.update_q_table(process_index)
+              
                 if random.uniform(0, 1) < self.epsilon:
                     process_index = random.randint(0, len(self.processes) - 1) # Explore process space
                 else:
                     process_index = np.argmax(self.q_table[self.state]) # Exploit learned values
 
-                next_state, reward = self.run_process(process_index)
-        
-                old_value = self.q_table[self.state][process_index]
-                next_max = np.argmax(self.q_table[next_state])
-        
-                new_value = (1 - self.alpha) * old_value + self.alpha * (reward + self.gamma * next_max)
-                self.q_table[self.state][process_index] = new_value
+                print(f'For state: ${self.state}, better action is ${self.processes[np.argmax(self.q_table[self.state])].name} and action taken is ${self.processes[process_index].name}')
+                if self.processes[process_index].name in ["vente_boite", "vente_tarte_pomme", "vente_tarte_citron", "vente_flan"]:
+                    action[self.processes[process_index].name] += 1
 
+                self.update_q_table(process_index)
 
-                self.state = next_state
-                available_proccess = next_state
+                epochs.append(self.epochs)
+                for key in action.keys():
+                    action_history[key].append(action[key])
                 self.epochs += 1
-                if self.epochs % 500000 == 0:
-                    self.epsilon -= 0.1
-        
+                # if self.epochs % 500000 == 0:
+                #     self.epsilon -= 0.1
+
+            self.stocks = copy.copy(stockTmp)
+            if self.epsilon > 0.2:
+                self.epsilon -= 0.05
             if i % 100 == 0:
                 # clear_output(wait=True)
                 print(f"Episode: {i}")
 
             print("Training finished.\n")
+        plt.figure(figsize=(10, 6))
+        for key, values in action_history.items():
+            plt.plot(epochs, values, label=key, linewidth=2)
+
+        plt.xlabel("Epochs")
+        plt.ylabel("Action Count")
+        plt.title("Action Selection Over Time")
+        plt.legend()
+        plt.grid()
+        plt.show()  
+        print("end")
         
         
 
@@ -177,7 +225,7 @@ stock = {
     "tarte_citron": 0,
     "tarte_pomme": 0,
     "flan": 0,
-    "boite": 100
+    "boite": 0
 }
 
 processes = []
