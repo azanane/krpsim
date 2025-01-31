@@ -13,9 +13,9 @@ class QLearning:
         self.q_table = q_table
 
         # Hyperparameters
-        self.alpha = 0.4
+        self.alpha = 0.3
         self.gamma = 0.9
-        self.epsilon = 1
+        self.epsilon = 0.5
 
         # For plotting metrics
         self.all_epochs = []
@@ -89,14 +89,18 @@ class QLearning:
 
         processTmp = self.processes[process_index]
 
-        # reward = processTmp.cost / 100 * -1
-        reward = processTmp.delay * -1
-        # reward = 0
+        reward = -20
+        # reward = processTmp.cost * -5 amoindrir la reward en fonction du cout (pas fou)
+        # reward -= processTmp.delay * 0.1 amoindrir la reward en fonction du delai (pas fou)
 
-        if processTmp in self.optimized_processes:
-            for key, value in processTmp.results.items():
-                if key in self.optimized_process_name:
-                    reward = 5 * (value - processTmp.cost)
+    
+        for key, value in processTmp.results.items():
+            # Si on a le stock deja au moins 20 fois superieur au resultat alors on achete plus 
+            if key not in self.optimized_process_name and self.stocks[key] > value * 15:
+                reward += -30
+            # On donne une reward en fonction de la quantité du resultat
+            if key in self.optimized_process_name:
+                reward = 5 * value
 
         return reward
 
@@ -111,6 +115,8 @@ class QLearning:
             heapq.heappush(self.current_proccesses, process)
 
         next_state = self.get_state()
+        if next_state == (0,):
+            reward -= 500
         self.action += 1
 
         return next_state, reward
@@ -119,10 +125,13 @@ class QLearning:
         next_state, reward = self.run_process(process_index)
         
         old_value = self.q_table[self.state][process_index]
-        next_max = np.argmax(self.q_table[next_state])
+        next_max = self.q_table[next_state][np.argmax(self.q_table[next_state])]
 
-        new_value = (1 - self.alpha) * old_value + self.alpha * (reward + self.gamma * next_max)
-        self.q_table[self.state][process_index] = new_value
+        # new_value = (1 - self.alpha) * old_value + self.alpha * (reward + self.gamma * next_max)
+        self.q_table[self.state][process_index] += self.alpha * \
+            (reward + self.gamma *
+             next_max - old_value)
+        # self.q_table[self.state][process_index] = new_value
 
         self.state = next_state
 
@@ -181,12 +190,12 @@ class QLearning:
 
                 self.epochs += 1
 
-            self.stocks = copy.copy(stockTmp)
+            print(f"Episode: {i}, delay: {self.current_delay}, epsilone: {self.epsilon}, euro : {self.stocks['euro']}")
             if self.epsilon > 0.2:
-                self.epsilon -= 0.05
+                self.epsilon -= 0.025
+            self.stocks = copy.copy(stockTmp)
             # if i % 100 == 0:
                 # clear_output(wait=True)
-            print(f"Episode: {i}, delay: {self.current_delay}, epsilone: {self.epsilon}")
             
 
             print("Training finished.\n")
@@ -243,7 +252,7 @@ stock = {
 }
 
 processes = []
-processes.append(Process("rien_faire", {}, {}, 100, 0))
+processes.append(Process("rien_faire", {}, {}, 50, 0))
 processes.append(Process("buy_pomme", {"euro": 100}, {"pomme": 700}, 200, 100))
 processes.append(Process("buy_citron", {"euro": 100}, {"citron": 400}, 200, 100))
 processes.append(Process("buy_oeuf", {"euro": 100}, {"oeuf": 100}, 200, 100))
