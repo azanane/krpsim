@@ -15,7 +15,7 @@ class QLearning:
         # Hyperparameters
         self.alpha = 0.4
         self.gamma = 0.9
-        self.epsilon = 0.2
+        self.epsilon = 1
 
         # For plotting metrics
         self.all_epochs = []
@@ -86,17 +86,17 @@ class QLearning:
         elif self.processes[process_index].needs and not self.processes[process_index].results:
             return -100
 
-        reward = -20
 
         processTmp = self.processes[process_index]
-        # for key_process, value_process in processTmp.results.items():
-        #     if key_process in self.optimized_process_needs:
-        #         reward = 30
+
+        # reward = processTmp.cost / 100 * -1
+        reward = processTmp.delay * -1
+        # reward = 0
 
         if processTmp in self.optimized_processes:
             for key, value in processTmp.results.items():
                 if key in self.optimized_process_name:
-                    reward = 5 * value
+                    reward = 5 * (value - processTmp.cost)
 
         return reward
 
@@ -129,15 +129,21 @@ class QLearning:
 
     def learning(self):
         stockTmp = copy.copy(self.stocks)
-        action = {
+        actions = {
             'vente_boite' : 0,
             'vente_tarte_pomme' : 0,
             'vente_tarte_citron' : 0,
             'vente_flan' : 0,
         }
+        actions_history = {
+            'vente_boite' : [],
+            'vente_tarte_pomme' : [],
+            'vente_tarte_citron' : [],
+            'vente_flan' : [],
+        }
         self.epochs = 1
 
-        for i in range(1, 6):
+        for i in range(1, 20):
             self.state = self.get_state()
             process_index = -1
 
@@ -145,7 +151,7 @@ class QLearning:
             self.current_proccesses = []
             self.epochs += 1
 
-            while (self.current_proccesses or self.state != (0,)) and self.epochs % 500000 != 0:
+            while (self.current_proccesses or self.state != (0,)) and self.epochs % 300000 != 0:
                 # if 15 in self.state or 16 in self.state or 17 in self.state or 18 in self.state:
                 # if process_index in [15, 14, 13, 11, 17, 18] and process_index in self.state:
                 #     print (self.processes[process_index].name)
@@ -156,38 +162,62 @@ class QLearning:
                     process_index = np.argmax(self.q_table[self.state]) # Exploit learned values
                 
 
-                print(f'For state: ${self.state}, better action is ${self.processes[np.argmax(self.q_table[self.state])].name} and action taken is ${self.processes[process_index].name}')
+                # print(f'For state: ${self.state}, better action is ${self.processes[np.argmax(self.q_table[self.state])].name} and action taken is ${self.processes[process_index].name}')
                 if self.processes[process_index].name in ["vente_boite", "vente_tarte_pomme", "vente_tarte_citron", "vente_flan"]:
-                    action[self.processes[process_index].name] += 1
+                    actions[self.processes[process_index].name] += 1
 
                 if process_index == 0:
                     stateTmp = copy.copy(self.state)
                     while stateTmp == self.state and self.current_proccesses != []:
                         self.update_stock_and_time()
+                    for key in actions:
+                        if actions_history[key]:
+                            actions_history[key].append(actions[key] + actions_history[key][-1])
+                        else:
+                            actions_history[key].append(actions[key])
+                        actions[key] = 0
 
                 self.update_q_table(process_index)
 
                 self.epochs += 1
-                # if self.epochs % 500000 == 0:
-                #     self.epsilon -= 0.1
 
             self.stocks = copy.copy(stockTmp)
             if self.epsilon > 0.2:
                 self.epsilon -= 0.05
-            if i % 100 == 0:
+            # if i % 100 == 0:
                 # clear_output(wait=True)
-                print(f"Episode: {i}")
+            print(f"Episode: {i}, delay: {self.current_delay}, epsilone: {self.epsilon}")
+            
 
             print("Training finished.\n")
+        # Define a color map for different lines
+        colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red']
+
+        plt.figure(figsize=(10, 5))
+
+        for (action, history), color in zip(actions_history.items(), colors):
+            plt.plot(history, marker='o', linestyle='-', color=color, linewidth=2, markersize=6, label=action.replace("_", " ").title())
+
+        # Labels, title, legend
+        plt.xlabel("Time (Updates)")
+        plt.ylabel("Sales Count")
+        plt.title("Sales History Over Time")
+        plt.legend()
+        plt.grid(True)
+
+        # Show the plot
+        plt.show()
+        print(self.current_delay)
         
         
 
 class Process:
-    def __init__(self, name, needs, results, delay):
+    def __init__(self, name, needs, results, delay, cost = 0):
         self.name = name
         self.needs = needs  # Using a set to represent needs (hashable items)
         self.results = results  # Using a set to represent results (hashable items)
         self.delay = delay
+        self.cost = cost
 
     def __lt__(self, other):
         # Compare based on the delay
@@ -213,26 +243,26 @@ stock = {
 }
 
 processes = []
-processes.append(Process("rien_faire", {}, {}, 0))
-processes.append(Process("buy_pomme", {"euro": 100}, {"pomme": 700}, 200))
-processes.append(Process("buy_citron", {"euro": 100}, {"citron": 400}, 200))
-processes.append(Process("buy_oeuf", {"euro": 100}, {"oeuf": 100}, 200))
-processes.append(Process("buy_farine", {"euro": 100}, {"farine": 800}, 200))
-processes.append(Process("buy_beurre", {"euro": 100}, {"beurre": 2000}, 200))
-processes.append(Process("buy_lait", {"euro": 100}, {"lait": 2000}, 200))
+processes.append(Process("rien_faire", {}, {}, 100, 0))
+processes.append(Process("buy_pomme", {"euro": 100}, {"pomme": 700}, 200, 100))
+processes.append(Process("buy_citron", {"euro": 100}, {"citron": 400}, 200, 100))
+processes.append(Process("buy_oeuf", {"euro": 100}, {"oeuf": 100}, 200, 100))
+processes.append(Process("buy_farine", {"euro": 100}, {"farine": 800}, 200, 100))
+processes.append(Process("buy_beurre", {"euro": 100}, {"beurre": 2000}, 200, 100))
+processes.append(Process("buy_lait", {"euro": 100}, {"lait": 2000}, 200, 100))
 
-processes.append(Process("separation_oeuf", {"oeuf": 1}, {"jaune_oeuf": 1, "blanc_oeuf": 1}, 2))
-processes.append(Process("reunion_oeuf", {"jaune_oeuf": 1, "blanc_oeuf": 1}, {"oeuf": 1}, 1))
-processes.append(Process("do_pate_sablee", {"oeuf": 5, "farine": 100, "beurre": 4, "lait": 5}, {"pate_sablee": 300, "blanc_oeuf": 3}, 300))
-processes.append(Process("do_pate_feuilletee", {"oeuf": 3, "farine": 200, "beurre": 10, "lait": 2}, {"pate_feuilletee": 100}, 800))
-processes.append(Process("do_tarte_citron", {"pate_feuilletee": 100, "citron": 50, "blanc_oeuf": 5, "four": 1}, {"tarte_citron": 5, "four": 1}, 60))
-processes.append(Process("do_tarte_pomme", {"pate_sablee": 100, "pomme": 30, "four": 1}, {"tarte_pomme": 8, "four": 1}, 50))
-processes.append(Process("do_flan", {"jaune_oeuf": 10, "lait": 4, "four": 1}, {"flan": 5, "four": 1}, 300))
-processes.append(Process("do_boite", {"tarte_citron": 3, "tarte_pomme": 7, "flan": 1, "euro": 30}, {"boite": 1}, 1))
-processes.append(Process("vente_boite", {"boite": 100}, {"euro": 55000}, 30))
-processes.append(Process("vente_tarte_pomme", {"tarte_pomme": 10}, {"euro": 100}, 30))
-processes.append(Process("vente_tarte_citron", {"tarte_citron": 10}, {"euro": 200}, 30))
-processes.append(Process("vente_flan", {"flan": 10}, {"euro": 300}, 30))
+processes.append(Process("separation_oeuf", {"oeuf": 1}, {"jaune_oeuf": 1, "blanc_oeuf": 1}, 2, 1))
+processes.append(Process("reunion_oeuf", {"jaune_oeuf": 1, "blanc_oeuf": 1}, {"oeuf": 1}, 1, 1))
+processes.append(Process("do_pate_sablee", {"oeuf": 5, "farine": 100, "beurre": 4, "lait": 5}, {"pate_sablee": 300, "blanc_oeuf": 3}, 300, 17.95)) #12,5 + 5 + 0.2 + 0.25
+processes.append(Process("do_pate_feuilletee", {"oeuf": 3, "farine": 200, "beurre": 10, "lait": 2}, {"pate_feuilletee": 100}, 800, 28.6)) # 3 + 25 + 0.5 + 0. 1
+processes.append(Process("do_tarte_citron", {"pate_feuilletee": 100, "citron": 50, "blanc_oeuf": 5, "four": 1}, {"tarte_citron": 5, "four": 1}, 60, 46.1)) # 28.6 + 12.5 + 5
+processes.append(Process("do_tarte_pomme", {"pate_sablee": 100, "pomme": 30, "four": 1}, {"tarte_pomme": 8, "four": 1}, 50, 10.3)) # 6 + 4.3 
+processes.append(Process("do_flan", {"jaune_oeuf": 10, "lait": 4, "four": 1}, {"flan": 5, "four": 1}, 300, 10.2)) # 10 + 0.2 
+processes.append(Process("do_boite", {"tarte_citron": 3, "tarte_pomme": 7, "flan": 1, "euro": 30}, {"boite": 1}, 1, 47)) # 36 + 9 + 2
+processes.append(Process("vente_boite", {"boite": 100}, {"euro": 55000}, 30, 7700))
+processes.append(Process("vente_tarte_pomme", {"tarte_pomme": 10}, {"euro": 100}, 30, 13))
+processes.append(Process("vente_tarte_citron", {"tarte_citron": 10}, {"euro": 200}, 30, 120))
+processes.append(Process("vente_flan", {"flan": 10}, {"euro": 300}, 30, 20))
 
 
 
