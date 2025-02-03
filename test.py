@@ -9,13 +9,14 @@ import matplotlib.pyplot as plt
 class QLearning:
     def __init__(self, stocks, processes, q_table, optimized_processes=["euro"]):
         self.stocks = stocks
+        self.current_stocks = copy.copy(stock)
         self.processes = processes
         self.q_table = q_table
 
         # Hyperparameters
-        self.alpha = 0.3
+        self.alpha = 0.4
         self.gamma = 0.9
-        self.epsilon = 0.5
+        self.epsilon = 0.3
 
         # For plotting metrics
         self.all_epochs = []
@@ -26,9 +27,17 @@ class QLearning:
         self.optimized_process_needs = []
         self.optimized_process_name = ['euro']
         self.optimized_processes = [process for index, process in enumerate(processes) if index in self.optimized_index]
+        self.max_values = {}
         for process in self.optimized_processes:
             for key, value in process.needs.items():
                 self.optimized_process_needs.append(key)
+        
+        for process in self.processes:
+            for key, value in process.needs.items():
+                value_tmp = self.max_values.get(key)
+                if value_tmp == None or value_tmp < value:
+                    self.max_values[key] = value
+
         
         self.state = 0
         self.reward = 0
@@ -62,7 +71,7 @@ class QLearning:
             for key, value in process.results.items():
                 self.stocks[key] += value
 
-    def get_state(self):
+    def get_state(self, stocks):
         state = []
 
         for i, process in enumerate(self.processes):
@@ -70,7 +79,7 @@ class QLearning:
             can_do_process = True
             for item, required_quantity in process.needs.items():
                 # If the required quantity of any item is greater than the stock, the process cannot be done
-                if self.stocks.get(item, 0) < required_quantity:
+                if stocks.get(item, 0) < required_quantity:
                     can_do_process = False
                     break
         
@@ -89,17 +98,17 @@ class QLearning:
 
         processTmp = self.processes[process_index]
 
-        reward = -20
-        # reward = processTmp.cost * -5 amoindrir la reward en fonction du cout (pas fou)
-        # reward -= processTmp.delay * 0.1 amoindrir la reward en fonction du delai (pas fou)
+        reward = -1
+        # reward -= processTmp.cost * 5 # amoindrir la reward en fonction du cout (pas fou)
+        # reward -= processTmp.delay * 1 #amoindrir la reward en fonction du delai (pas fou)
 
     
         for key, value in processTmp.results.items():
             # Si on a le stock deja au moins 20 fois superieur au resultat alors on achete plus 
-            if key not in self.optimized_process_name and self.stocks[key] > value * 15:
+            if key not in self.optimized_process_name and self.stocks[key] > self.max_values[key] * 1:
                 reward += -30
             # On donne une reward en fonction de la quantité du resultat
-            if key in self.optimized_process_name:
+            if key in self.optimized_process_name and processTmp in self.optimized_processes:
                 reward = 5 * value
 
         return reward
@@ -111,101 +120,107 @@ class QLearning:
         if process_index in self.state and process_index != 0:
             for key, value in process.needs.items():
                 self.stocks[key] -= value
+                self.current_stocks[key] -= value
             process.delay += self.current_delay
             heapq.heappush(self.current_proccesses, process)
-
-        next_state = self.get_state()
-        if next_state == (0,):
-            reward -= 500
-        self.action += 1
-
+            for key, value in process.results.items():
+                self.current_stocks[key] += value
+            next_state = self.get_state(self.current_stocks)
+        else:
+            next_state = self.get_state(self.stocks)
+        # if next_state == (0,):
+        #     reward -= 500
         return next_state, reward
 
     def update_q_table(self, process_index):
+        state_of_current_stock = self.get_state(self.current_stocks)
         next_state, reward = self.run_process(process_index)
         
         old_value = self.q_table[self.state][process_index]
-        next_max = self.q_table[next_state][np.argmax(self.q_table[next_state])]
+        if type(self.q_table.get(next_state)) != np.ndarray or next_state == self.state or state_of_current_stock == next_state:
+            next_max = 0
+        else:
+            next_max = self.q_table[next_state][np.argmax(self.q_table[next_state])]
 
         # new_value = (1 - self.alpha) * old_value + self.alpha * (reward + self.gamma * next_max)
-        self.q_table[self.state][process_index] += self.alpha * \
-            (reward + self.gamma *
-             next_max - old_value)
-        # self.q_table[self.state][process_index] = new_value
+        new_value = old_value + self.alpha * (reward + self.gamma * next_max - old_value)
+        self.q_table[self.state][process_index] = new_value
 
-        self.state = next_state
+        self.state = self.get_state(self.stocks)
 
 
     def learning(self):
         stockTmp = copy.copy(self.stocks)
-        actions = {
-            'vente_boite' : 0,
-            'vente_tarte_pomme' : 0,
-            'vente_tarte_citron' : 0,
-            'vente_flan' : 0,
-        }
-        actions_history = {
-            'vente_boite' : [],
-            'vente_tarte_pomme' : [],
-            'vente_tarte_citron' : [],
-            'vente_flan' : [],
-        }
+        actions = {}
+        actions_history = {}
         self.epochs = 1
 
-        for i in range(1, 20):
-            self.state = self.get_state()
+        for i in range(1, 10000):
+            self.state = self.get_state(self.stocks)
             process_index = -1
 
             self.current_delay = 0
             self.current_proccesses = []
             self.epochs += 1
 
-            while (self.current_proccesses or self.state != (0,)) and self.epochs % 300000 != 0:
+            while (self.current_proccesses or self.state != (0,)) and self.current_delay < 20000:
+                if type(self.q_table.get(self.state)) != np.ndarray:
+                    self.q_table[self.state] = np.zeros(len(processes))
+                    
                 # if 15 in self.state or 16 in self.state or 17 in self.state or 18 in self.state:
                 # if process_index in [15, 14, 13, 11, 17, 18] and process_index in self.state:
                 #     print (self.processes[process_index].name)
-              
                 if random.uniform(0, 1) < self.epsilon:
                     process_index = random.randint(0, len(self.processes) - 1) # Explore process space
                 else:
                     process_index = np.argmax(self.q_table[self.state]) # Exploit learned values
                 
-
                 # print(f'For state: ${self.state}, better action is ${self.processes[np.argmax(self.q_table[self.state])].name} and action taken is ${self.processes[process_index].name}')
-                if self.processes[process_index].name in ["vente_boite", "vente_tarte_pomme", "vente_tarte_citron", "vente_flan"]:
-                    actions[self.processes[process_index].name] += 1
+                # if self.processes[process_index].name in ["vente_boite", "vente_tarte_pomme", "vente_tarte_citron", "vente_flan", "rien_faire"] and process_index in self.state:
+                #     actions[self.processes[process_index].name] += 1
+
+                if process_index in self.state:
+                    if actions.get(self.processes[process_index].name) != None:
+                        actions[self.processes[process_index].name] += 1
+                    else:
+                        actions[self.processes[process_index].name] = 1
 
                 if process_index == 0:
                     stateTmp = copy.copy(self.state)
                     while stateTmp == self.state and self.current_proccesses != []:
                         self.update_stock_and_time()
                     for key in actions:
-                        if actions_history[key]:
-                            actions_history[key].append(actions[key] + actions_history[key][-1])
-                        else:
+                        if actions_history.get(key):
                             actions_history[key].append(actions[key])
-                        actions[key] = 0
+                        else:
+                            actions_history[key] = [actions[key]]
 
                 self.update_q_table(process_index)
 
                 self.epochs += 1
 
             print(f"Episode: {i}, delay: {self.current_delay}, epsilone: {self.epsilon}, euro : {self.stocks['euro']}")
-            if self.epsilon > 0.2:
-                self.epsilon -= 0.025
+            for key, value in actions.items():
+                print(f'Action: {key}: {value}')
+            for key, value in self.stocks.items():
+                print(f'stock: {key}: {value}')
+            # if self.epsilon > 0.2:
+            #     self.epsilon -= 0.025
             self.stocks = copy.copy(stockTmp)
-            # if i % 100 == 0:
-                # clear_output(wait=True)
-            
-
+            self.current_stocks = copy.copy(stockTmp)
             print("Training finished.\n")
         # Define a color map for different lines
+        print(len(self.q_table))
+        for state, value in self.q_table.items():
+            print(f'State: {state}, values: {value}')
+
         colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red']
 
         plt.figure(figsize=(10, 5))
 
-        for (action, history), color in zip(actions_history.items(), colors):
-            plt.plot(history, marker='o', linestyle='-', color=color, linewidth=2, markersize=6, label=action.replace("_", " ").title())
+        for action, history in actions_history.items():
+            if action in ["vente_boite", "vente_tarte_pomme", "vente_tarte_citron", "vente_flan"]:
+                plt.plot(history, marker='o', linestyle='-', color=colors.pop(), linewidth=2, markersize=6, label=action.replace("_", " ").title())
 
         # Labels, title, legend
         plt.xlabel("Time (Updates)")
@@ -221,7 +236,7 @@ class QLearning:
         
 
 class Process:
-    def __init__(self, name, needs, results, delay, cost = 0):
+    def __init__(self, name, needs, results, delay, cost = 0, delay_to_make = 0):
         self.name = name
         self.needs = needs  # Using a set to represent needs (hashable items)
         self.results = results  # Using a set to represent results (hashable items)
@@ -273,15 +288,34 @@ processes.append(Process("vente_tarte_pomme", {"tarte_pomme": 10}, {"euro": 100}
 processes.append(Process("vente_tarte_citron", {"tarte_citron": 10}, {"euro": 200}, 30, 120))
 processes.append(Process("vente_flan", {"flan": 10}, {"euro": 300}, 30, 20))
 
+# do_pate_sablee = 10 + 25 + 0.4 + 0.5 + 300 = 326
+# do_pate_feuilletee = 6 + 50 + 1 + 0.2 + 800 = 857
+# do_tarte_citron = 857 + 25 + 0.5 + 60 = 968
+# do_tarte_pommes = 326 + 9 + 50 = 385
+# do_flan = 20 + 40 + 0.4 + 300 =  361
+# do_boite = 581 + 337 + 72 = 990
+# vente_boite = 99000
+# vente_tarte_pomme = 481
+# vente_tarte_citron = 1936
+# vente_flan = 722
+# Pour 10000 => vente_tarte_pomme => 1800 euros
+# Pour 10000 => vente_flan => 3626 euros
+# Pour 100000 => vente_boite => 47300
+# Pour 100000 => vente_tarte_pomme => 18087
+# Pour 100000 => vente_flan => 38781
+
+
+
 
 
 
 q_table = {}
 
-for i in range(0, len(processes) + 1):
-    for comb in combinations(range(len(processes)), i):
-        q_table[comb] = np.zeros(len(processes))
-    
+# for i in range(0, len(processes) + 1):
+#     for comb in combinations(range(len(processes)), i):
+#         q_table[comb] = np.zeros(len(processes))
+
+
 
 
 qlearn = QLearning(stock, processes, q_table)
