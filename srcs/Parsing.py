@@ -14,7 +14,6 @@ class Parser:
         self.krpsim = Krpsim()
 
         self.get_file_path()
-        print("test")
         
     def get_file_path(self):
         parser = ArgumentParser()
@@ -54,7 +53,7 @@ class Parser:
 
     def read_stock(self, line):
         quantity_tmp = 0
-        self.read_next_quantity(line, quantity_tmp)
+        quantity_tmp = self.read_next_quantity(line, quantity_tmp)
         self.is_end_of_line_valid(line)
         self.krpsim.add_or_update_stock(self.name_tmp, quantity_tmp)
 
@@ -85,7 +84,7 @@ class Parser:
             if not line[self.new_index].isdigit():
                 raise ValueError(f"Error occurred in line: {line}. Char '{line[self.new_index]}' was given at index {self.new_index} instead of a delay")
 
-        self.read_next_quantity(line, quantity_tmp)
+        quantity_tmp = self.read_next_quantity(line, quantity_tmp)
         process_tmp.set_delay(quantity_tmp)
         self.is_end_of_line_valid(line)
 
@@ -117,6 +116,7 @@ class Parser:
         quantity = int(substring)
         if quantity < 0:
             raise ValueError(f"Error occurred in line: {line}. Quantity: {quantity} cannot be negative.")
+        return quantity
 
     def add_stock_from_process(self, line, process_tmp, is_need):
         self.name_tmp = ""
@@ -125,7 +125,7 @@ class Parser:
         while self.new_index < len(line) - 1 and line[self.new_index] != ')':
             self.read_next_name(line)
             self.verify_next_char(line, ':')
-            self.read_next_quantity(line, quantity_tmp)
+            quantity_tmp = self.read_next_quantity(line, quantity_tmp)
             self.pass_char(line, ' ')
             if line[self.new_index] != ')':
                 self.verify_next_char(line, ';')
@@ -167,7 +167,6 @@ class Parser:
 
     def is_end_of_line_valid(self, line):
         self.index = self.new_index
-        print(self.new_index, " ", len(line))
         while self.new_index < len(line) and line[self.new_index] != ' ':
             self.new_index += 1
         if self.new_index < len(line) and not (self.new_index == len(line) - 1 or line[self.new_index] == '#'):

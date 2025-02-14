@@ -10,7 +10,6 @@ class Krpsim:
         self.stocks[stock_name] = stock_quantity
 
     def add_process(self, process):
-        print(process)
         self.processes.append(process)
 
     def add_optimized_stocks(self, optimized_stock):
