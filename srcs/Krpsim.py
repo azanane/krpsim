@@ -1,9 +1,10 @@
 class Krpsim:
-    def __init__(self, stocks = {}, processes = [], optimized_stocks = [], is_time_opti = False):
+    def __init__(self, stocks = {}, processes = [], optimized_stocks = [], is_time_opti = False, delay = 1000):
         self.processes = processes
         self.stocks = stocks
         self.optimized_stocks = optimized_stocks
         self.is_time_opti = is_time_opti
+        self.delay = delay
 
     # SETTERS
     def add_or_update_stock(self, stock_name, stock_quantity):

@@ -25,14 +25,10 @@ class QLearning:
         self.optimized_stock_evo = {}
 
         self.current_proccesses = []  # This will be our priority queue (min-heap)
-        self.optimized_index = [15]
-        self.optimized_process_needs = []
-        self.optimized_process_name = ['euro']
+        self.optimized_index = [15,16,17,18]
+        self.optimized_process_name = optimized_processes
         self.optimized_processes = [process for index, process in enumerate(processes) if index in self.optimized_index]
         self.max_values = {}
-        for process in self.optimized_processes:
-            for key, value in process.needs.items():
-                self.optimized_process_needs.append(key)
         
         for process in self.processes:
             for key, value in process.needs.items():
@@ -43,7 +39,7 @@ class QLearning:
         
         self.state = 0
         self.reward = 0
-        self.current_delay = 10
+        self.current_delay = 0
         self.action = 0
 
         self.not_training = False
@@ -163,7 +159,7 @@ class QLearning:
         actions_history = {}
         self.epochs = 1
 
-        for i in range(1, 100):
+        for i in range(1, 10):
             # actions_tmp = copy.copy(actions)
             self.state = self.get_state(self.stocks)
             process_index = -1

@@ -10,9 +10,9 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "args": ["-f", "ressources/ikea"],
+            "args": ["-f", "ressources/inception", "-d", "1000000"],
             "console": "integratedTerminal",
             "justMyCode": false
-        }
+        },
     ]
 }

@@ -19,10 +19,10 @@ do_tarte_citron:(pate_feuilletee:100;citron:50;blanc_oeuf:5;four:1):(tarte_citro
 do_tarte_pomme:(pate_sablee:100;pomme:30;four:1):(tarte_pomme:8;four:1):50
 do_flan:(jaune_oeuf:10;lait:4;four:1):(flan:5;four:1):300
 do_boite:(tarte_citron:3;tarte_pomme:7;flan:1;euro:30):(boite:1):1
-vente_boite:(boite:100):(euro:55000):30 #15
-vente_tarte_pomme:(tarte_pomme:10):(euro:100):30 #16
-vente_tarte_citron:(tarte_citron:10):(euro:200):30 #17
-vente_flan:(flan:10):(euro:300):30 #18
+vente_boite:(boite:100):(euro:55000):30 
+vente_tarte_pomme:(tarte_pomme:10):(euro:100):30
+vente_tarte_citron:(tarte_citron:10):(euro:200):30
+vente_flan:(flan:10):(euro:300):30
 #do_benef:(euro:1):(benefice:1):0
 #
 #

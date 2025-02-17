@@ -18,17 +18,22 @@ class Parser:
     def get_file_path(self):
         parser = ArgumentParser()
         parser.add_argument("-f", "--file", dest="data_file", help="Open ressources/filename file")
+        parser.add_argument("-d", "--delay", dest="delay", help="Delay")
 
         args = parser.parse_args()
         file_path = args.data_file
-        if (file_path is None):
-            print("Correct format: python3 QLearning.py -f {file_path}")
+        delay = args.delay
+        if (file_path is None or delay is None):
+            print("Correct format: python3 QLearning.py -f {file_path} -d {delay}")
             exit(1)
+        self.krpsim.delay = int(delay)
         self.parse_file(file_path)
         self.initialize_stock()
 
     def parse_file(self, file_path):
-
+        rien_faire = Process()
+        rien_faire.name = "rien_faire"
+        self.krpsim.processes.append(rien_faire)
         with open(file_path) as input_file:
             for line in input_file:
                 line = line.strip()
