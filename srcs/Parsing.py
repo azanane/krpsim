@@ -61,12 +61,12 @@ class Parser:
         process_tmp = Process()
         quantity_tmp = 0
 
-        process_tmp.set_name(self.name_tmp)
+        process_tmp.name = self.name_tmp
 
         self.verify_next_char(line, '(')
         self.add_stock_from_process(line, process_tmp, True)
-        if not process_tmp.get_needs():
-            raise ValueError(f"No needs were given for the process: {process_tmp.get_name()}")
+        if not process_tmp.needs:
+            raise ValueError(f"No needs were given for the process: {process_tmp.name}")
 
         self.verify_next_char(line, ')')
         self.verify_next_char(line, ':')
@@ -74,8 +74,8 @@ class Parser:
         try:
             self.verify_next_char(line, '(')
             self.add_stock_from_process(line, process_tmp, False)
-            if not process_tmp.get_results():
-                raise ValueError(f"No results were given for the process: {process_tmp.get_name()}")
+            if not process_tmp.results:
+                raise ValueError(f"No results were given for the process: {process_tmp.name}")
 
             self.verify_next_char(line, ')')
             self.verify_next_char(line, ':')
@@ -85,7 +85,7 @@ class Parser:
                 raise ValueError(f"Error occurred in line: {line}. Char '{line[self.new_index]}' was given at index {self.new_index} instead of a delay")
 
         quantity_tmp = self.read_next_quantity(line, quantity_tmp)
-        process_tmp.set_delay(quantity_tmp)
+        process_tmp.delay = quantity_tmp
         self.is_end_of_line_valid(line)
 
         self.krpsim.add_process(process_tmp)
@@ -96,8 +96,8 @@ class Parser:
 
         while self.new_index < len(line) - 1 and line[self.new_index - 1] != ')':
             self.read_next_name(line)
-            if self.name_tmp == "time" and not self.krpsim.get_is_time_opti():
-                self.krpsim.set_is_time_opti(True)
+            if self.name_tmp == "time" and not self.krpsim.is_time_opti:
+                self.krpsim.is_time_opti = True
             else:
                 self.krpsim.add_optimized_stocks(self.name_tmp)
             if line[self.new_index] == ')':
@@ -173,13 +173,13 @@ class Parser:
             raise ValueError(f"Wrong end of process or optimized line: {line}")
 
     def initialize_stock(self):
-        stocks = self.krpsim.get_stocks()
-        for process in self.krpsim.get_processes():
-            for key in process.get_needs():
+        stocks = self.krpsim.stocks
+        for process in self.krpsim.processes:
+            for key in process.needs:
                 if key not in stocks:
                     self.krpsim.add_or_update_stock(key, 0)
 
-            for key in process.get_results():
+            for key in process.results:
                 if key not in stocks:
                     quantity = 0
                 else:

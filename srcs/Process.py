@@ -5,13 +5,6 @@ class Process:
         self.results = results  # Using a set to represent results (hashable items)
         self.delay = delay
         self.cost = cost
-    
-    # SETTERS
-    def set_name(self, name):
-        self.name = name
-    
-    def set_delay(self, delay):
-        self.delay = delay
 
     def add_need(self, name, quantity):
         self.needs[name] = quantity
@@ -22,16 +15,3 @@ class Process:
     def __lt__(self, other):
         # Compare based on the delay
         return self.delay < other.delay
-
-    # GETTERS
-    def get_name(self):
-        return self.name
-
-    def get_needs(self):
-        return self.needs
-    
-    def get_results(self):
-        return self.results
-    
-    def get_delay(self):
-        return self.delay
