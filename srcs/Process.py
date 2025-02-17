@@ -1,10 +1,10 @@
 class Process:
-    def __init__(self, name = "", delay = "", needs = {}, results = {}, cost = 0, delay_to_make = 0):
-        self.name = name
-        self.needs = needs  # Using a set to represent needs (hashable items)
-        self.results = results  # Using a set to represent results (hashable items)
-        self.delay = delay
-        self.cost = cost
+
+    def __init__(self):
+        self.name = ""
+        self.needs = {}  # Using a set to represent needs (hashable items)
+        self.results = {}  # Using a set to represent results (hashable items)
+        self.delay = 0
 
     def add_need(self, name, quantity):
         self.needs[name] = quantity

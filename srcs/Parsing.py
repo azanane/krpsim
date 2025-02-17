@@ -64,7 +64,7 @@ class Parser:
         process_tmp.name = self.name_tmp
 
         self.verify_next_char(line, '(')
-        self.add_stock_from_process(line, process_tmp, True)
+        process_tmp = self.add_stock_from_process(line, process_tmp, True)
         if not process_tmp.needs:
             raise ValueError(f"No needs were given for the process: {process_tmp.name}")
 
@@ -73,7 +73,7 @@ class Parser:
 
         try:
             self.verify_next_char(line, '(')
-            self.add_stock_from_process(line, process_tmp, False)
+            process_tmp = self.add_stock_from_process(line, process_tmp, False)
             if not process_tmp.results:
                 raise ValueError(f"No results were given for the process: {process_tmp.name}")
 
@@ -135,6 +135,7 @@ class Parser:
                 process_tmp.add_result(self.name_tmp, quantity_tmp)
 
         self.index = self.new_index
+        return process_tmp
 
     def pass_char(self, line, c):
         while self.new_index < len(line) and line[self.new_index] == c:
