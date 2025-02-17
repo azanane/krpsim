@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
-from Process import Process
-from Krpsim import Krpsim
+from srcs.Process import Process
+from srcs.Krpsim import Krpsim
 
 class Parser:
 
@@ -186,6 +186,3 @@ class Parser:
                     quantity = stocks[key]
 
                 self.krpsim.add_or_update_stock(key, quantity)
-
-
-parser = Parser()
