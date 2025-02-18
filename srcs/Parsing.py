@@ -19,14 +19,20 @@ class Parser:
         parser = ArgumentParser()
         parser.add_argument("-f", "--file", dest="data_file", help="Open ressources/filename file")
         parser.add_argument("-d", "--delay", dest="delay", help="Delay")
+        parser.add_argument("-e", "--epochs", dest="epochs", help="number of training epochs")
 
         args = parser.parse_args()
         file_path = args.data_file
         delay = args.delay
+        epochs = args.epochs
         if (file_path is None or delay is None):
             print("Correct format: python3 QLearning.py -f {file_path} -d {delay}")
             exit(1)
         self.krpsim.delay = int(delay)
+        if epochs is None:
+            self.krpsim.epochs = 100
+        else:
+            self.krpsim.epochs = int(epochs)
         self.parse_file(file_path)
         self.initialize_stock()
 

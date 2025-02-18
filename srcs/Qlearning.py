@@ -191,19 +191,9 @@ class QLearning:
         next_state, reward = self.run_process(process_index)
 
         if process_index == 0:
-            stateTmp = copy.copy(self.state)
-            # while stateTmp == self.state and self.current_proccesses != []:
             self.update_stock_and_time()
-            if stateTmp == next_state:
-                reward -= 20
         
         old_value = self.q_table[self.state][process_index]
-        # if reward <= 0:
-        #     reward = min(reward, min(old_value * 1.1, old_value * -1.1))
-        # if type(self.q_table.get(next_state)) != np.ndarray or next_state == self.state or state_of_current_stock == next_state:
-        #     next_max = 0
-        # else:
-        # If we don´t have the q_table set for next_state, the next max will be 0
         if type(self.q_table.get(next_state)) != np.ndarray:
             next_max = 0
         else:
@@ -227,16 +217,7 @@ class QLearning:
             else:
                 process_index = np.argmax(self.q_table[self.state]) # Exploit learned values
 
-            # if process_index == 0:
-            #     stateTmp = copy.copy(self.state)
-            #     # while stateTmp == self.state and self.current_proccesses != []:
-            #     self.update_stock_and_time()
-            
-            # if verbose and process_index in self.state and process_index != 0:
-            #     print(f'{self.current_delay}: {self.processes[process_index].name}')
-            
             self.update_q_table(process_index)
-        print("end")
 
     def __reinitialize(self, stockTmp, do_random_stock = False):
         if do_random_stock:
@@ -276,7 +257,6 @@ class QLearning:
 
     def run(self):
         self.not_training = True
-        self.delay = 10000000
         self.epsilon = 0.1
         self.__run_env(True)
          # Define a color map for different lines
