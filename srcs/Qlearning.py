@@ -12,8 +12,8 @@ class QLearning:
         self.q_table = {}
 
         # Hyperparameters
-        self.alpha = 0.4
-        self.gamma = 0.9
+        self.alpha = 0.2
+        self.gamma = 0.8
         self.epsilon = 0.1
 
         # For plotting metrics
@@ -78,36 +78,44 @@ class QLearning:
         if self.not_training:
             self.optimized_stock_evo[self.current_delay] = self.stocks[self.optimized_stock_name[0]]
 
-    def get_state(self, stocks):
-        state = []
-
-        for key, value in stocks.items():
-            state.append(value)
-
-        return tuple(state)
-
-
     # def get_state(self, stocks):
     #     state = []
-        
+
     #     for key, value in stocks.items():
     #         min_need = self.max_values.get(key, 0) # default 0
-        
-    #         # Categorize dynamically based on min_need
-    #         if value or min_need == 0:
-    #             category = 0  # No stock
-    #         elif value <= min_need:
-    #             category = 1  # Bare minimum available
-    #         elif value <= min_need * 2:
-    #             category = 2  # Sufficient stock
-    #         elif value <= min_need * 5:
-    #             category = 3  # Well-stocked
+    #         if min_need != 0 and value > min_need * 5:
+    #             state.append(min_need * 5)
     #         else:
-    #             category = 4  # Excess stock
-
-    #         state.append(category)
+    #          state.append(value)
 
     #     return tuple(state)
+
+
+    def get_state(self, stocks):
+        state = []
+        
+        for key, value in stocks.items():
+            min_need = self.max_values.get(key, 0) # default 0
+        
+            # Categorize dynamically based on min_need
+            if value == 0 or min_need == 0 or value < min_need:
+                category = 0  # No stock
+            elif value <= min_need * 1:
+                category = 1  # Sufficient stock
+            elif value <= min_need * 2:
+                category = 2  # Well-stocked
+            elif value <= min_need * 5:
+                category = 3  # Well-stocked
+            elif value <= min_need * 10:
+                category = 4  # Well-stocked
+            elif value <= min_need * 20:
+                category = 5  # Well-stocked
+            else:
+                category = 6  # Excess stock
+
+            state.append(category)
+
+        return tuple(state)
 
     def is_doable(self, stocks, proccess_index):
 
@@ -139,17 +147,17 @@ class QLearning:
 
         processTmp = self.processes[process_index]
 
-        reward = -1
+        reward = -20
         # reward -= processTmp.cost * 5 # amoindrir la reward en fonction du cout (pas fou)
         # reward -= processTmp.delay * 1 #amoindrir la reward en fonction du delai (pas fou)
 
         
         for key, value in processTmp.results.items():
             value_needed = processTmp.needs.get(key, 0)
-            if value_needed != 0 and value_needed > value:
-                reward -= 50 * value_needed
+            # if value_needed != 0 and value_needed > value:
+            #     reward -= 50 * value_needed
             # Si on a le stock deja au moins 20 fois superieur au resultat alors on achete plus 
-            if key not in self.optimized_stock_name and self.stocks[key] > self.max_values[key] * 10:
+            if key not in self.optimized_stock_name and self.stocks[key] > self.max_values[key] * 5:
                 reward += -30 * value
             # On donne une reward en fonction de la quantité du resultat
             elif key in self.optimized_stock_name and processTmp in self.optimized_processes:
@@ -181,9 +189,13 @@ class QLearning:
 
         next_state = self.get_state(self.current_stocks)
 
-        # If we can only do nothing and there is no current proccess it is then end
-        if next_state == (0,) and len(self.current_proccesses) == 0:
+        if not self.is_anything_doable() and self.current_proccesses == []:
             reward -= 100
+
+
+        # If we can only do nothing and there is no current proccess it is then end
+        # if next_state == (0,) and len(self.current_proccesses) == 0:
+        #     reward -= 100
         return next_state, reward
 
     def update_q_table(self, process_index):
@@ -202,7 +214,7 @@ class QLearning:
         new_value = old_value + self.alpha * (reward + self.gamma * next_max - old_value)
         self.q_table[self.state][process_index] = new_value
 
-        self.state = self.get_state(self.stocks)
+        self.state = self.get_state(self.current_stocks)
 
     def __run_env(self, verbose = False):
         self.verbose = verbose
