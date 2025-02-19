@@ -12,10 +12,9 @@ class QLearning:
         self.q_table = {}
 
         # Hyperparameters
-        self.alpha = 0.2
-        self.gamma = 0.9
+        self.alpha = 0.3
+        self.gamma = 0.8
         self.epsilon = 0.5
-
         # For plotting metrics
         self.all_epochs = []
         self.all_penalties = []
@@ -46,6 +45,9 @@ class QLearning:
         self.action = 0
 
         self.not_training = False
+
+        self.stocks_prediction =  copy.copy(stocks)
+        self.state_prediction = ()
 
     def get_processes_with_smallest_delay(self):
         """Retrieve all processes with the smallest delay."""
@@ -87,6 +89,14 @@ class QLearning:
                 if stocks.get(item, 0) < required_quantity:
                     can_do_process = False
                     break
+            if can_do_process == True and process not in self.optimized_processes:
+                non_needed_stocks_len = 0
+                for item, result_quantity in process.results.items():
+                    # If the required quantity of any item is greater than the stock, the process cannot be done
+                     if (self.max_values.get(item, 0) and self.max_values.get(item, 0) <= self.stocks[item]) or (process.needs.get(item) != None and result_quantity < process.needs[item]):
+                        non_needed_stocks_len += 1
+                if non_needed_stocks_len == len(process.results) and non_needed_stocks_len != 0:
+                    can_do_process = False
         
             if can_do_process:
                 # If all requirements are met, add the process index to the list
@@ -103,18 +113,26 @@ class QLearning:
 
         processTmp = self.processes[process_index]
 
-        reward = -1
+        reward = -10
         # reward -= processTmp.cost * 5 # amoindrir la reward en fonction du cout (pas fou)
         # reward -= processTmp.delay * 1 #amoindrir la reward en fonction du delai (pas fou)
 
-    
-        for key, value in processTmp.results.items():
+        for key, value in processTmp.needs.items():
             # Si on a le stock deja au moins 20 fois superieur au resultat alors on achete plus 
-            if key not in self.optimized_stock_name and self.stocks[key] > self.max_values[key] * 10:
-                reward += -30
+            # if key not in self.optimized_stock_name and self.stocks[key] > self.max_values[key] * 10:
+            #     reward += -30
             # On donne une reward en fonction de la quantité du resultat
             if key in self.optimized_stock_name and processTmp in self.optimized_processes:
-                reward += 50 * value
+                reward -= value
+
+
+        for key, value in processTmp.results.items():
+            # Si on a le stock deja au moins 20 fois superieur au resultat alors on achete plus 
+            # if key not in self.optimized_stock_name and self.stocks[key] > self.max_values[key] * 10:
+            #     reward += -30
+            # On donne une reward en fonction de la quantité du resultat
+            if key in self.optimized_stock_name and processTmp in self.optimized_processes:
+                reward += value
 
         return reward
 
@@ -133,7 +151,8 @@ class QLearning:
             next_state = self.get_state(self.current_stocks)
         else:
             next_state = self.get_state(self.stocks)
-        if next_state == (0,) and len(self.current_proccesses) == 0:
+        test_state = self.get_state(self.stocks_prediction)
+        if test_state == (0,):
             reward -= 100
         return next_state, reward
 
@@ -155,16 +174,78 @@ class QLearning:
 
         self.state = self.get_state(self.stocks)
 
+    def get_stock_prediction(self, process_index_execute):
+        
+        for key, value in self.processes[process_index_execute].needs.items():
+            self.stocks_prediction[key] -= value
+
+        for key, value in self.processes[process_index_execute].results.items():
+            self.stocks_prediction[key] += value
+    
+    def get_state_prediction(self):
+
+        state_prediction = []
+ 
+        for i, process in enumerate(self.processes):
+            can_do_process = True
+            for item, required_quantity in process.needs.items():
+                # If the required quantity of any item is greater than the stock, the process cannot be done
+                if self.stocks_prediction.get(item, 0) < required_quantity:
+                    can_do_process = False
+                    break
+
+            if can_do_process == True and process not in self.optimized_processes:
+                non_needed_stocks_len = 0
+                for item, result_quantity in process.results.items():
+                    # If the required quantity of any item is greater than the stock, the process cannot be done
+                    if (self.max_values.get(item, 0) and self.max_values.get(item, 0) <= self.stocks_prediction[item]) or (process.needs.get(item) != None and result_quantity < process.needs[item]):
+                        non_needed_stocks_len += 1
+                if non_needed_stocks_len == len(process.results) and non_needed_stocks_len != 0:
+                    can_do_process = False
+            
+            if can_do_process:
+                # If all requirements are met, add the process index to the list
+                state_prediction.append(i)
+
+        self.state_prediction = tuple(state_prediction)
+
     def __run_env(self, verbose = False):
+
+        process_history = {}
+        for index in self.processes:
+            process_history[index.name] = 0
+
+        self.stocks_prediction = copy.copy(self.stocks)
+
         while (self.current_proccesses or self.state != (0,) and self.current_delay < self.delay):
 
             if type(self.q_table.get(self.state)) != np.ndarray:
                 self.q_table[self.state] = np.zeros(len(self.processes))
 
+            self.get_state_prediction()
+
             if random.uniform(0, 1) < self.epsilon:
-                process_index = random.randint(0, len(self.processes) - 1) # Explore process space
+                process_index = random.randint(0, len(self.state_prediction) - 1) # Explore process space
+                process_index = self.state_prediction[process_index]
             else:
-                process_index = np.argmax(self.q_table[self.state]) # Exploit learned values
+                state_q_table = []
+                for index in self.state_prediction:
+                    state_q_table.append(self.q_table[self.state][index])
+
+                process_index = np.argmax(state_q_table)
+                process_index = self.state_prediction[process_index] # Exploit learned values
+
+            # If an action is in the state prediction but not in the real state (we do nothing first to get our stocks)
+            if process_index not in self.state:
+                process_index = 0
+            else: 
+                self.get_stock_prediction(process_index)
+
+            # Keep an history of used processes
+            if self.processes[process_index].name in process_history and process_index != 0:
+                process_history[self.processes[process_index].name] += 1
+            elif process_index != 0:
+                process_history[self.processes[process_index].name] = 1
 
             if process_index == 0:
                 stateTmp = copy.copy(self.state)
@@ -175,13 +256,15 @@ class QLearning:
                 print(f'{self.current_delay}: {self.processes[process_index].name}')
             
             self.update_q_table(process_index)
+        print(self.stocks)
+        print(process_history)
         print("end")
 
     def __reinitialize(self, stockTmp, do_random_stock = False):
         if do_random_stock:
             for key in self.stocks:
                 if self.max_values.get(key):
-                    self.stocks[key] = self.max_values[key] * random.randint(1, 10)
+                    self.stocks[key] = self.max_values[key] * random.randint(1, 3)
                 else:
                     self.stocks[key] = 0
                 print(f"{key}  :  {self.stocks[key]}")
@@ -218,7 +301,7 @@ class QLearning:
 
     def run(self):
         self.not_training = True
-        self.delay = 10000000
+        self.delay = 1000000
         self.epsilon = 0
         self.__run_env(True)
          # Define a color map for different lines
