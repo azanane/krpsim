@@ -16,7 +16,12 @@ class DQN(nn.Module):
 
         # Define network layers
         self.fc1 = nn.Linear(in_states, h1_nodes)   # first fully connected layer
+        nn.init.normal_(self.fc1.weight, mean=0, std=0.01)
+        nn.init.normal_(self.fc1.bias, mean=0, std=0.01)
+
         self.out = nn.Linear(h1_nodes, out_actions) # ouptut layer w
+        nn.init.normal_(self.out.weight, mean=0, std=0.01)
+
 
     def forward(self, x):
         x = F.relu(self.fc1(x)) # Apply rectified linear unit (ReLU) activation
@@ -48,11 +53,11 @@ class KrpsimDQN():
         self.processes = processes
 
         # Hyperparameters (adjustable)
-        self.learning_rate_a = 0.001         # learning rate (alpha)
+        self.learning_rate_a = 0.01         # learning rate (alpha)
         self.discount_factor_g = 0.9         # discount rate (gamma)    
         self.network_sync_rate = 10          # number of steps the agent takes before syncing the policy and target network
-        self.replay_memory_size = 1000       # size of replay memory
-        self.mini_batch_size = 32            # size of the training data set sampled from the replay memory
+        self.replay_memory_size = 10000       # size of replay memory
+        self.mini_batch_size = 32           # size of the training data set sampled from the replay memory
 
         # Neural Network
         self.loss_fn = nn.MSELoss()          # NN Loss function. MSE=Mean Squared Error can be swapped to something else.
@@ -154,28 +159,28 @@ class KrpsimDQN():
     
     def get_reward(self, process_index, is_doable): 
         if is_doable == False:
-            return -100
-        elif self.processes[process_index].needs and not self.processes[process_index].results:
-            return -100
+            return -1
+        # elif self.processes[process_index].needs and not self.processes[process_index].results:
+        #     return -100
 
 
         processTmp = self.processes[process_index]
 
         # By default we give negative reward for useless action
-        reward = -20 
+        reward = 0
 
         for key, value in processTmp.results.items():
             # value_needed = processTmp.needs.get(key, 0)
             # if our stock is too big we give negative reward
-            if key not in self.optimized_stock_name and self.current_stocks.get(key, 1) > self.max_values.get(key, 1) * 5:
-                reward += -10 * value
+            # if key not in self.optimized_stock_name and self.current_stocks.get(key, 1) > self.max_values.get(key, 1) * 5:
+            #     reward += -10 * value
             # if it is something we want to optimize we give a positive reward
             if key in self.optimized_stock_name and processTmp in self.optimized_processes:
-                reward += 100 * value
+                reward += 1
         
-        for key, value in processTmp.needs.items():
-            if key in self.optimized_stock_name and self.current_stocks.get(key, 1) > self.max_values.get(key, 1) * 5:
-                reward += -10 * value
+        # for key, value in processTmp.needs.items():
+        #     if key in self.optimized_stock_name and self.current_stocks.get(key, 1) > self.max_values.get(key, 1) * 5:
+        #         reward += -10 * value
 
         return reward
     
@@ -204,7 +209,7 @@ class KrpsimDQN():
             # if self.get_state(self.current_stocks) == state:
             #     reward -= 50
             if self.get_state(self.current_stocks) == 0 and self.current_stocks["armoire"] == 0:
-                reward -= 100
+                reward -= 1
 
         stateTmp = copy.copy(self.get_state(self.stocks))
         while stateTmp == self.get_state(self.stocks) and self.current_processes != [] and process_index == 0:
@@ -284,8 +289,12 @@ class KrpsimDQN():
 
             # Check if enough experience has been collected
             if len(memory)>self.mini_batch_size:
-                mini_batch = memory.sample(self.mini_batch_size)
-                self.optimize(mini_batch, policy_dqn, target_dqn)        
+
+                b = 32
+                while b < 100:
+                    mini_batch = memory.sample(self.mini_batch_size)
+                    self.optimize(mini_batch, policy_dqn, target_dqn)
+                    b += 32        
 
                 # Decay epsilon
                 epsilon = max(epsilon - 1/episodes, 0)
@@ -296,12 +305,12 @@ class KrpsimDQN():
                     target_dqn.load_state_dict(policy_dqn.state_dict())
                     step_count=0
 
-            # print(self.stocks["armoire"])
+            print(self.stocks["armoire"])
 
             self.stocks = copy.copy(stocks_tmp)
             self.current_stocks = copy.copy(stocks_tmp)
 
-        self.print_dqn(policy_dqn)
+        self.print_dqn(target_dqn)
         # # Save policy
         # torch.save(policy_dqn.state_dict(), "krpsim_dql.pt")
 
