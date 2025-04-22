@@ -48,6 +48,8 @@ class QLearning:
 
         self.stocks_prediction =  copy.copy(stocks)
         self.state_prediction = ()
+        self.all_solutions = []
+        self.new_solution_processes = {}
 
     def get_processes_with_smallest_delay(self):
         """Retrieve all processes with the smallest delay."""
@@ -217,6 +219,11 @@ class QLearning:
 
         self.stocks_prediction = copy.copy(self.stocks)
 
+        self.new_solution_processes = {}
+        new_processes = []
+        index_solution_processes = 0
+        found_solution = False
+
         while (self.current_proccesses or self.state != (0,) and self.current_delay < self.delay):
 
             if type(self.q_table.get(self.state)) != np.ndarray:
@@ -238,8 +245,13 @@ class QLearning:
             # If an action is in the state prediction but not in the real state (we do nothing first to get our stocks)
             if process_index not in self.state:
                 process_index = 0
-            else: 
+            else:
                 self.get_stock_prediction(process_index)
+            
+            if process_index in self.state and process_index != 0:
+                new_processes.append(process_index)
+                if self.processes[process_index] in self.optimized_processes:
+                    found_solution = True
 
             # Keep an history of used processes
             if self.processes[process_index].name in process_history and process_index != 0:
@@ -251,25 +263,33 @@ class QLearning:
                 stateTmp = copy.copy(self.state)
                 while stateTmp == self.state and self.current_proccesses != []:
                     self.update_stock_and_time()
+
+                    if new_processes:
+                        self.new_solution_processes[index_solution_processes] = copy.copy(new_processes)
+                        index_solution_processes += 1
+                        new_processes.clear()
+                        if found_solution: 
+                            self.all_solutions.append(self.new_solution_processes)
+                            found_solution = False
             
             if verbose and process_index in self.state and process_index != 0:
                 print(f'{self.current_delay}: {self.processes[process_index].name}')
             
-            self.update_q_table(process_index)
+        self.update_q_table(process_index)
         print(self.stocks)
         print(process_history)
         print("end")
 
     def __reinitialize(self, stockTmp, do_random_stock = False):
-        if do_random_stock:
-            for key in self.stocks:
-                if self.max_values.get(key):
-                    self.stocks[key] = self.max_values[key] * random.randint(1, 3)
-                else:
-                    self.stocks[key] = 0
-                print(f"{key}  :  {self.stocks[key]}")
-        else:
-            self.stocks = copy.copy(stockTmp)
+        # if do_random_stock:
+        #     for key in self.stocks:
+        #         if self.max_values.get(key):
+        #             self.stocks[key] = self.max_values[key] * random.randint(1, 3)
+        #         else:
+        #             self.stocks[key] = 0
+        #         print(f"{key}  :  {self.stocks[key]}")
+        # else:
+        self.stocks = copy.copy(stockTmp)
 
         self.current_stocks = copy.copy(self.stocks)
 
@@ -281,10 +301,10 @@ class QLearning:
         stockTmp = copy.copy(self.stocks)
 
         for i in range (1, epochs):
-            if random.uniform(0, 1) < 0.5:
-                self.__reinitialize(stockTmp, False)
-            else:
-                self.__reinitialize(stockTmp, True)
+            # if random.uniform(0, 1) < 0.5:
+            #     self.__reinitialize(stockTmp, False)
+            # else:
+            self.__reinitialize(stockTmp, True)
             self.__run_env(False)
             print(f"Episode: {i}, delay: {self.current_delay}, epsilone: {self.epsilon}, {self.optimized_stock_name}: {[value for key, value in self.stocks.items() if key in self.optimized_stock_name]}")
             # for key, value in actions.items():
@@ -301,7 +321,7 @@ class QLearning:
 
     def run(self):
         self.not_training = True
-        self.delay = 1000000
+        self.delay = 50000
         self.epsilon = 0
         self.__run_env(True)
          # Define a color map for different lines
