@@ -3,6 +3,7 @@ import random
 import numpy as np
 import heapq
 import matplotlib.pyplot as plt
+import collections
 
 class QLearning:
     def __init__(self, stocks, processes, optimized_stock=["euro"], delay = 1000):
@@ -48,7 +49,7 @@ class QLearning:
 
         self.stocks_prediction =  copy.copy(stocks)
         self.state_prediction = ()
-        self.all_solutions = []
+        self.solution = ()
         self.new_solution_processes = {}
 
     def get_processes_with_smallest_delay(self):
@@ -222,7 +223,6 @@ class QLearning:
         self.new_solution_processes = {}
         new_processes = []
         index_solution_processes = 0
-        found_solution = False
 
         while (self.current_proccesses or self.state != (0,) and self.current_delay < self.delay):
 
@@ -247,11 +247,12 @@ class QLearning:
                 process_index = 0
             else:
                 self.get_stock_prediction(process_index)
-            
+
             if process_index in self.state and process_index != 0:
                 new_processes.append(process_index)
-                if self.processes[process_index] in self.optimized_processes:
-                    found_solution = True
+                # We sort our list of new processes in order to don´t re-use it in the list of solution
+                new_processes.sort()
+
 
             # Keep an history of used processes
             if self.processes[process_index].name in process_history and process_index != 0:
@@ -264,18 +265,26 @@ class QLearning:
                 while stateTmp == self.state and self.current_proccesses != []:
                     self.update_stock_and_time()
 
-                    if new_processes:
-                        self.new_solution_processes[index_solution_processes] = copy.copy(new_processes)
-                        index_solution_processes += 1
-                        new_processes.clear()
-                        if found_solution: 
-                            self.all_solutions.append(self.new_solution_processes)
-                            found_solution = False
+                if new_processes:
+                    
+                    self.new_solution_processes[index_solution_processes] = copy.copy(new_processes)
+                    index_solution_processes += 1
+                    new_processes.clear()
+
             
             if verbose and process_index in self.state and process_index != 0:
                 print(f'{self.current_delay}: {self.processes[process_index].name}')
             
-        self.update_q_table(process_index)
+            self.update_q_table(process_index)
+
+        if self.stocks[self.optimized_stock_name[0]] > 0:
+            fitness = self.current_delay / self.stocks[self.optimized_stock_name[0]]
+        else:
+            fitness = 0
+ 
+        if not self.solution or self.solution[0] > fitness:
+            self.solution = (fitness, self.new_solution_processes)
+
         print(self.stocks)
         print(process_history)
         print("end")
@@ -321,7 +330,7 @@ class QLearning:
 
     def run(self):
         self.not_training = True
-        self.delay = 50000
+        self.delay = 1000000
         self.epsilon = 0
         self.__run_env(True)
          # Define a color map for different lines
