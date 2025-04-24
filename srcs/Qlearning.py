@@ -12,8 +12,8 @@ class QLearning:
         self.q_table = {}
 
         # Hyperparameters
-        self.alpha = 0.2
-        self.gamma = 0.7
+        self.alpha = 0.4
+        self.gamma = 0.9
         self.epsilon = 0.1
 
         # For plotting metrics
@@ -24,16 +24,19 @@ class QLearning:
 
         self.current_proccesses = []  # This will be our priority queue (min-heap)
         self.optimized_stock_name = optimized_stock
-        # Store optimized processes beforehand to reduce looping
-        self.optimized_processes = [
-            process for process in processes if any(stock in process.results for stock in optimized_stock)
-        ]
+        self.optimized_processes = []
+        for stock_name in self.optimized_stock_name:
+            for process in processes:
+                if stock_name in process.results:
+                    self.optimized_processes.append(process)
 
-        # Precompute max stock values for optimization
-        self.max_values = {
-            key: max(p.needs.get(key, 0) for p in processes)
-            for p in processes for key in p.needs
-        }
+        self.max_values = {}
+        
+        for process in self.processes:
+            for key, value in process.needs.items():
+                value_tmp = self.max_values.get(key)
+                if value_tmp == None or value_tmp < value:
+                    self.max_values[key] = value
 
         self.actions = {}
         self.actions_history = []
@@ -75,24 +78,37 @@ class QLearning:
         if self.not_training:
             self.optimized_stock_evo[self.current_delay] = self.stocks[self.optimized_stock_name[0]]
 
+    # def get_state(self, stocks):
+    #     state = []
+
+    #     for key, value in stocks.items():
+    #         state.append(value)
+
+    #     return tuple(state)
+
+
     def get_state(self, stocks):
         state = []
-
+        
         for key, value in stocks.items():
-            min_need = self.max_values.get(key, 0) # default 0
-        #     real_values_coef = 1
-            # if len(self.stocks) > 10:
-            #     real_values_coef = .2
-            if min_need != 0 and value > min_need * 5:
-                state.append(min_need * 5)
-        #     elif min_need != 0 and value > min_need * 3:
-        #         state.append(min_need * 3)
-            # elif min_need != 0 and value > min_need * real_values_coef:
-            elif min_need != 0 and value > min_need * 1:
-                state.append(min_need * 1)
-        #     else:
+            if len(stocks) > 10:
+                min_need = self.max_values.get(key, 0) # default 0
+            
+                # Categorize dynamically based on min_need
+                if value == 0 or min_need == 0:
+                    category = 0  # No stock
+                elif value <= min_need:
+                    category = 1  # Bare minimum available
+                elif value <= min_need * 2:
+                    category = 2  # Sufficient stock
+                elif value <= min_need * 5:
+                    category = 3  # Well-stocked
+                else:
+                    category = 4  # Excess stock
+                state.append(category)
             else:
                 state.append(value)
+
 
         return tuple(state)
 
@@ -104,16 +120,16 @@ class QLearning:
                 return False
         return True
     
-    def is_anything_doable(self, stocks, check_current_process):
+    def is_anything_doable(self):
         for i, process in enumerate(self.processes):
             can_do_process = True
             for item, required_quantity in process.needs.items():
                 # If the required quantity of any item is greater than the stock, the process cannot be done
-                if stocks.get(item, 0) < required_quantity:
+                if self.stocks.get(item, 0) < required_quantity:
                     can_do_process = False
             if can_do_process == True and i != 0:
                 return True
-        if self.current_proccesses != [] and check_current_process:
+        if self.current_proccesses != []:
             return True
         return False
 
@@ -126,30 +142,29 @@ class QLearning:
 
         processTmp = self.processes[process_index]
 
-        # By default we give negative reward for useless action
-        reward = -20 
+        reward = -1
+        # reward -= processTmp.cost * 5 # amoindrir la reward en fonction du cout (pas fou)
+        # reward -= processTmp.delay * 1 #amoindrir la reward en fonction du delai (pas fou)
 
-        for key, value in processTmp.results.items():
-            # value_needed = processTmp.needs.get(key, 0)
-            # if our stock is too big we give negative reward
-            if key not in self.optimized_stock_name and self.current_stocks.get(key, 1) > self.max_values.get(key, 1) * 5:
-                reward += -10 * value
-            # if it is something we want to optimize we give a positive reward
-            if key in self.optimized_stock_name and processTmp in self.optimized_processes:
-                reward += 50 * value
         
-        for key, value in processTmp.needs.items():
-            if key in self.optimized_stock_name and self.current_stocks.get(key, 1) > self.max_values.get(key, 1) * 5:
-                reward += -10 * value
+        for key, value in processTmp.results.items():
+            value_needed = processTmp.needs.get(key, 0)
+            if value_needed != 0 and value_needed > value:
+                reward -= 50 * value_needed
+            # Si on a le stock deja au moins 20 fois superieur au resultat alors on achete plus 
+            if key not in self.optimized_stock_name and self.stocks[key] > self.max_values[key] * 10:
+                reward += -30 * value
+            # On donne une reward en fonction de la quantité du resultat
+            elif key in self.optimized_stock_name and processTmp in self.optimized_processes:
+                reward += 50 * (value - value_needed)
 
         return reward
 
     def run_process(self, process_index):
         process = copy.copy(self.processes[process_index])
         is_doable = self.is_doable(self.stocks, process_index)
-        if is_doable:
-            if self.verbose == True and process_index != 0:
-            # if process_index != 0:
+        if is_doable: 
+            if self.verbose and process_index != 0:
                 print(f'{self.current_delay}: {self.processes[process_index].name}')
             if self.actions.get(process.name) != None:
                 self.actions[process.name] += 1
@@ -166,20 +181,21 @@ class QLearning:
             heapq.heappush(self.current_proccesses, process)
             for key, value in process.results.items():
                 self.current_stocks[key] += value
-            if self.get_state(self.current_stocks) == self.state:
-                reward -= 50
 
         next_state = self.get_state(self.current_stocks)
+
+        # If we can only do nothing and there is no current proccess it is then end
+        if next_state == (0,) and len(self.current_proccesses) == 0:
+            reward -= 100
         return next_state, reward
 
     def update_q_table(self, process_index):
         state_of_current_stock = self.get_state(self.current_stocks)
         next_state, reward = self.run_process(process_index)
 
-        stateTmp = copy.copy(self.get_state(self.stocks))
-        while stateTmp == self.get_state(self.stocks) and self.current_proccesses != [] and process_index == 0:
+        if process_index == 0:
             self.update_stock_and_time()
-            
+        
         old_value = self.q_table[self.state][process_index]
         if type(self.q_table.get(next_state)) != np.ndarray:
             next_max = 0
@@ -189,12 +205,12 @@ class QLearning:
         new_value = old_value + self.alpha * (reward + self.gamma * next_max - old_value)
         self.q_table[self.state][process_index] = new_value
 
-        self.state = self.get_state(self.current_stocks)
+        self.state = self.get_state(self.stocks)
 
     def __run_env(self, verbose = False):
         self.verbose = verbose
         # while (self.current_proccesses or self.state != (0,) and self.current_delay < self.delay):
-        while (self.is_anything_doable(self.stocks, True) and self.current_delay < self.delay):
+        while (self.is_anything_doable() and self.current_delay < self.delay):
 
             if type(self.q_table.get(self.state)) != np.ndarray:
                 self.q_table[self.state] = np.zeros(len(self.processes))
@@ -203,7 +219,6 @@ class QLearning:
                 process_index = random.randint(0, len(self.processes) - 1) # Explore process space
             else:
                 process_index = np.argmax(self.q_table[self.state]) # Exploit learned values
-
 
             self.update_q_table(process_index)
 
@@ -227,6 +242,8 @@ class QLearning:
     def train(self, epochs):
         stockTmp = copy.copy(self.stocks)
 
+        table = []
+
         for i in range (1, epochs):
             if random.uniform(0, 1) < 1:
                 self.__reinitialize(stockTmp, False)
@@ -238,8 +255,18 @@ class QLearning:
             print(f"Episode: {i}, delay: {self.current_delay}, epsilone: {self.epsilon}, {self.optimized_stock_name}: {[value for key, value in self.stocks.items() if key in self.optimized_stock_name]}")
             print(f"State number: {len(self.q_table)}")
 
+            if self.stocks[self.optimized_stock_name[0]] > 0:
+                fitness = self.current_delay / self.stocks[self.optimized_stock_name[0]]
+            else:
+                fitness = -1
+ 
+            table.append(fitness)
+
             if self.epsilon > 0.2 and i % (epochs / 10) == 0:
                 self.epsilon -= 0.025
+
+        values = [value for value in table if value <= 50]
+        print(values)
         
         self.__reinitialize(stockTmp, False)
 
@@ -247,6 +274,10 @@ class QLearning:
         self.not_training = True
         self.epsilon = 0.1
         self.__run_env(True)
+         # Define a color map for different lines
+        # print(len(self.q_table))
+        # for state, value in self.q_table.items():
+        #     print(f'State: {state}, values: {value}')
 
         x_values = list(self.optimized_stock_evo.keys())
         y_values = list(self.optimized_stock_evo.values())
