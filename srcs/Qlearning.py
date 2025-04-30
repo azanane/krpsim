@@ -47,6 +47,9 @@ class QLearning:
         self.current_delay = 0
         self.delay = delay
 
+        self.solution = ()
+        self.new_solution_processes = {}
+
         self.not_training = False
 
     def get_processes_with_smallest_delay(self):
@@ -189,12 +192,17 @@ class QLearning:
             reward -= 100
         return next_state, reward
 
-    def update_q_table(self, process_index):
+    def update_q_table(self, process_index, new_processes, index_solution_processes):
         state_of_current_stock = self.get_state(self.current_stocks)
         next_state, reward = self.run_process(process_index)
 
         if process_index == 0:
             self.update_stock_and_time()
+
+            self.new_solution_processes[index_solution_processes] = copy.copy(new_processes)
+            index_solution_processes += 1
+            new_processes.clear()
+
         
         old_value = self.q_table[self.state][process_index]
         if type(self.q_table.get(next_state)) != np.ndarray:
@@ -207,8 +215,14 @@ class QLearning:
 
         self.state = self.get_state(self.stocks)
 
+        return index_solution_processes
+
     def __run_env(self, verbose = False):
         self.verbose = verbose
+
+        self.new_solution_processes = {}
+        new_processes = []
+        index_solution_processes = 0
         # while (self.current_proccesses or self.state != (0,) and self.current_delay < self.delay):
         while (self.is_anything_doable() and self.current_delay < self.delay):
 
@@ -220,7 +234,22 @@ class QLearning:
             else:
                 process_index = np.argmax(self.q_table[self.state]) # Exploit learned values
 
-            self.update_q_table(process_index)
+            if self.processes[process_index].is_feasible(self.stocks) and process_index != 0:
+                new_processes.append(process_index)
+                # We sort our list of new processes in order to don´t re-use it in the list of solution
+                new_processes.sort()
+
+            index_solution_processes = self.update_q_table(process_index, new_processes, index_solution_processes)
+
+        
+        if self.stocks[self.optimized_stock_name[0]] > 0:
+            fitness = self.current_delay / self.stocks[self.optimized_stock_name[0]]
+        else:
+            fitness = -1
+
+        if fitness >= 0 and (not self.solution or self.solution[0] > fitness):
+            self.solution = (fitness, self.new_solution_processes)
+
 
     def __reinitialize(self, stockTmp, do_random_stock = False):
         if do_random_stock:
@@ -270,10 +299,48 @@ class QLearning:
         
         self.__reinitialize(stockTmp, False)
 
+
+    def __run_solution(self):
+
+        solution_runnable = self.solution[1]
+        current_delay = 0
+        
+        
+        delays = []
+        delay_index = 0
+
+        for index in solution_runnable:
+
+            if solution_runnable[index]:
+
+                if delays:
+                    current_delay += delays[delay_index]
+
+                delays = []
+                delay_index = 0
+            else:
+                if delay_index < len(delays) - 1:
+                    delay_index += 1
+
+            for process_index in solution_runnable[index]:
+                
+                if process_index:
+
+                    if not delays or self.processes[process_index].delay not in delays:
+                        delays.append(self.processes[process_index].delay)
+                        delays.sort()
+                    
+
+                print(f'{current_delay}: {self.processes[process_index].name}')
+
+
     def run(self):
         self.not_training = True
         self.epsilon = 0.1
-        self.__run_env(True)
+        if self.solution:
+            self.__run_solution()
+        else:
+            print("Solution not found, please re-launch the search with more epochs or a with a bigger delay")
          # Define a color map for different lines
         # print(len(self.q_table))
         # for state, value in self.q_table.items():
@@ -291,5 +358,5 @@ class QLearning:
         plt.ylabel('Stock Value')
 
         # Show the plot
-        plt.show()
+        # plt.show()
         # print(self.current_delay)
