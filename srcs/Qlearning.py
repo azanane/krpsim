@@ -22,7 +22,7 @@ class QLearning:
 
         self.optimized_stock_evo = {}
 
-        self.current_proccesses = []  # This will be our priority queue (min-heap)
+        self.current_processes = []  # This will be our priority queue (min-heap)
         self.optimized_stock_name = optimized_stock
         self.optimized_processes = []
         for stock_name in self.optimized_stock_name:
@@ -49,21 +49,22 @@ class QLearning:
 
         self.solution = ()
         self.new_solution_processes = {}
+        self.solution_stock = {}
 
         self.not_training = False
 
     def get_processes_with_smallest_delay(self):
         """Retrieve all processes with the smallest delay."""
-        if not self.current_proccesses:
+        if not self.current_processes:
             return []
 
         # Get the smallest delay
-        smallest_delay = self.current_proccesses[0].delay
+        smallest_delay = self.current_processes[0].delay
         processes_with_smallest_delay = []
 
         # Pop all processes with the smallest delay
-        while self.current_proccesses and self.current_proccesses[0].delay == smallest_delay:
-            process = heapq.heappop(self.current_proccesses)
+        while self.current_processes and self.current_processes[0].delay == smallest_delay:
+            process = heapq.heappop(self.current_processes)
             processes_with_smallest_delay.append(process)
 
         self.current_delay = smallest_delay
@@ -132,7 +133,7 @@ class QLearning:
                     can_do_process = False
             if can_do_process == True and i != 0:
                 return True
-        if self.current_proccesses != []:
+        if self.current_processes != []:
             return True
         return False
 
@@ -181,14 +182,14 @@ class QLearning:
                 self.stocks[key] -= value
                 self.current_stocks[key] -= value
             process.delay += self.current_delay
-            heapq.heappush(self.current_proccesses, process)
+            heapq.heappush(self.current_processes, process)
             for key, value in process.results.items():
                 self.current_stocks[key] += value
 
         next_state = self.get_state(self.current_stocks)
 
         # If we can only do nothing and there is no current proccess it is then end
-        if next_state == (0,) and len(self.current_proccesses) == 0:
+        if next_state == (0,) and len(self.current_processes) == 0:
             reward -= 100
         return next_state, reward
 
@@ -223,7 +224,7 @@ class QLearning:
         self.new_solution_processes = {}
         new_processes = []
         index_solution_processes = 0
-        # while (self.current_proccesses or self.state != (0,) and self.current_delay < self.delay):
+        # while (self.current_processes or self.state != (0,) and self.current_delay < self.delay):
         while (self.is_anything_doable() and self.current_delay < self.delay):
 
             if type(self.q_table.get(self.state)) != np.ndarray:
@@ -241,6 +242,8 @@ class QLearning:
 
             index_solution_processes = self.update_q_table(process_index, new_processes, index_solution_processes)
 
+        while self.current_processes:
+            self.update_stock_and_time()
         
         if self.stocks[self.optimized_stock_name[0]] > 0:
             fitness = self.current_delay / self.stocks[self.optimized_stock_name[0]]
@@ -249,6 +252,7 @@ class QLearning:
 
         if fitness >= 0 and (not self.solution or self.solution[0] > fitness):
             self.solution = (fitness, self.new_solution_processes)
+            self.solution_stock = self.stocks
 
 
     def __reinitialize(self, stockTmp, do_random_stock = False):
@@ -266,7 +270,7 @@ class QLearning:
 
         self.state = self.get_state(self.stocks)
         self.current_delay = 0
-        self.current_proccesses = []
+        self.current_processes = []
 
     def train(self, epochs):
         stockTmp = copy.copy(self.stocks)
@@ -299,6 +303,12 @@ class QLearning:
         
         self.__reinitialize(stockTmp, False)
 
+    def __print_stocks_results(self):
+        
+        print("Stocks :")
+        for name in self.solution_stock:
+
+            print(f'{name} : {self.solution_stock[name]}')
 
     def __run_solution(self):
 
@@ -316,7 +326,17 @@ class QLearning:
                 if delays:
                     current_delay += delays[delay_index]
 
-                delays = []
+                if delay_index < len(delays) - 1:
+
+                    past_delay = delays[delay_index]
+                    # remove all delays of finished processes
+                    delays = delays[delay_index + 1:]
+
+                    for i_delay in range(len(delays)):
+                        delays[i_delay] -= past_delay
+                else:
+                    delays = []
+
                 delay_index = 0
             else:
                 if delay_index < len(delays) - 1:
@@ -330,8 +350,12 @@ class QLearning:
                         delays.append(self.processes[process_index].delay)
                         delays.sort()
                     
+                    print(f'{current_delay}: {self.processes[process_index].name}')
 
-                print(f'{current_delay}: {self.processes[process_index].name}')
+        current_delay = current_delay + delays[len(delays) - 1]
+        print(f'no more process doable at time {current_delay}')
+
+        self.__print_stocks_results()
 
 
     def run(self):
@@ -341,7 +365,7 @@ class QLearning:
             self.__run_solution()
         else:
             print("Solution not found, please re-launch the search with more epochs or a with a bigger delay")
-         # Define a color map for different lines
+        # Define a color map for different lines
         # print(len(self.q_table))
         # for state, value in self.q_table.items():
         #     print(f'State: {state}, values: {value}')
