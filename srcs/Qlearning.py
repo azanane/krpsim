@@ -189,7 +189,7 @@ class QLearning:
         next_state = self.get_state(self.current_stocks)
 
         # If we can only do nothing and there is no current proccess it is then end
-        if next_state == (0,) and len(self.current_processes) == 0:
+        if next_state == (0,) and len(self.current_proccesses) == 0:
             reward -= 100
         return next_state, reward
 
