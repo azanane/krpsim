@@ -1,0 +1,15 @@
+# Dofus demo - krpsim - Simplified Kamas Production
+boisdefrene:20
+ble:30
+eau:999
+hache:1
+kamas:0
+
+do_couperboisfrene:(hache:1):(boisdefrene:1;hache:1):10
+do_couperplanchefrene:(boisdefrene:2):(PlancheDeFrene:1):10
+do_cuirepainsimple:(ble:3;eau:1):(PainSimple:2):15
+
+do_vendreplanches:(PlancheDeFrene:1):(Kamas:5):5
+do_vendrepains:(PainSimple:1):(Kamas:3):3
+
+optimize:(kamas)

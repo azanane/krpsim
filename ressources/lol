@@ -1,0 +1,10 @@
+# Dofus demo - krpsim - Simplified Kamas Production
+lvl:0
+character:1
+skin:0
+
+do_game:(character:1):(lvl:1;character:1):100
+do_game_with_skin:(character:1;skin:1):(lvl:10;character:1;skin:1):100
+do_achat_skin:(lvl:10):(skin:1):10
+
+optimize:(lvl)

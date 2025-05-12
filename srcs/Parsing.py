@@ -48,11 +48,13 @@ class Parser:
                 self.new_index = 0
 
                 self.read_next_name(line)
-                if line[self.index] == '#' or self.name_tmp == "":
+                if len(line) == 0 or line[self.index] == '#' or self.name_tmp == "":
                     continue
                 if self.new_index >= len(line):
                     raise ValueError(f"Error for the line: {line}")
-                self.verify_next_char(line, ':')
+                self.verify_next_char(line, ':', only_one=True)
+                if line[self.new_index] == ":":
+                    raise ValueError(f"No needs were given for the line: {line}")
                 if self.name_tmp == "optimize":
                     self.read_optimized_stock(line)
                 elif line[self.new_index] != '(':
@@ -148,17 +150,19 @@ class Parser:
         self.index = self.new_index
         return process_tmp
 
-    def pass_char(self, line, c):
+    def pass_char(self, line, c, only_one = False):
         while self.new_index < len(line) and line[self.new_index] == c:
             self.new_index += 1
+            if only_one:
+                break
         self.index = self.new_index
 
-    def verify_next_char(self, line, c):
+    def verify_next_char(self, line, c, only_one = False):
         self.pass_char(line, ' ')
         if line[self.new_index] != c:
             raise ValueError(f"Error occurred in line: {line}. Char '{line[self.new_index]}' was given at index {self.new_index} instead of char '{c}'")
         else:
-            self.pass_char(line, c)
+            self.pass_char(line, c, only_one)
         self.pass_char(line, ' ')
 
     def read_next_name(self, line):
