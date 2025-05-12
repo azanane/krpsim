@@ -2,10 +2,10 @@ import copy
 import random
 import numpy as np
 import heapq
-import matplotlib.pyplot as plt
 
 class QLearning:
     def __init__(self, stocks, processes, optimized_stock=["euro"], delay = 1000):
+
         self.stocks = stocks
         self.current_stocks = copy.copy(stocks)
         self.processes = processes
@@ -15,12 +15,6 @@ class QLearning:
         self.alpha = 0.4
         self.gamma = 0.9
         self.epsilon = 0.1
-
-        # For plotting metrics
-        self.all_epochs = []
-        self.all_penalties = []
-
-        self.optimized_stock_evo = {}
 
         self.current_processes = []  # This will be our priority queue (min-heap)
         self.optimized_stock_name = optimized_stock
@@ -37,10 +31,6 @@ class QLearning:
                 value_tmp = self.max_values.get(key)
                 if value_tmp == None or value_tmp < value:
                     self.max_values[key] = value
-
-        self.actions = {}
-        self.actions_history = []
-
         
         self.state = 0
         self.reward = 0
@@ -78,20 +68,8 @@ class QLearning:
             for key, value in process.results.items():
                 self.stocks[key] += value
 
-        # faire un graph de l'evo de l'argent en fonction de l'epoch et du delay
-        if self.not_training:
-            self.optimized_stock_evo[self.current_delay] = self.stocks[self.optimized_stock_name[0]]
-
-    # def get_state(self, stocks):
-    #     state = []
-
-    #     for key, value in stocks.items():
-    #         state.append(value)
-
-    #     return tuple(state)
-
-
     def get_state(self, stocks):
+
         state = []
         
         for key, value in stocks.items():
@@ -113,7 +91,6 @@ class QLearning:
             else:
                 state.append(value)
 
-
         return tuple(state)
 
     def is_doable(self, stocks, proccess_index):
@@ -122,35 +99,40 @@ class QLearning:
             # If the required quantity of any item is greater than the stock, the process cannot be done
             if stocks.get(item, 0) < required_quantity:
                 return False
+        
         return True
     
     def is_anything_doable(self):
+
         for i, process in enumerate(self.processes):
+        
             can_do_process = True
+        
             for item, required_quantity in process.needs.items():
+        
                 # If the required quantity of any item is greater than the stock, the process cannot be done
                 if self.stocks.get(item, 0) < required_quantity:
                     can_do_process = False
+        
             if can_do_process == True and i != 0:
                 return True
+        
         if self.current_processes != []:
             return True
+        
         return False
 
-    def get_reward(self, process_index, is_doable): 
+    def get_reward(self, process_index, is_doable):
+
         if is_doable == False:
             return -100
         elif self.processes[process_index].needs and not self.processes[process_index].results:
             return -100
 
-
         processTmp = self.processes[process_index]
 
         reward = -1
-        # reward -= processTmp.cost * 5 # amoindrir la reward en fonction du cout (pas fou)
-        # reward -= processTmp.delay * 1 #amoindrir la reward en fonction du delai (pas fou)
 
-        
         for key, value in processTmp.results.items():
             value_needed = processTmp.needs.get(key, 0)
             if value_needed != 0 and value_needed > value:
@@ -165,15 +147,9 @@ class QLearning:
         return reward
 
     def run_process(self, process_index):
+
         process = copy.copy(self.processes[process_index])
         is_doable = self.is_doable(self.stocks, process_index)
-        if is_doable: 
-            if self.verbose and process_index != 0:
-                print(f'{self.current_delay}: {self.processes[process_index].name}')
-            if self.actions.get(process.name) != None:
-                self.actions[process.name] += 1
-            else:
-                self.actions[process.name] = 1
         reward = self.get_reward(process_index, is_doable)
 
         # Remove from the stock the needs, and upgrade directly by removing and adding de current_stock
@@ -194,7 +170,6 @@ class QLearning:
         return next_state, reward
 
     def update_q_table(self, process_index, new_processes, index_solution_processes):
-        state_of_current_stock = self.get_state(self.current_stocks)
         next_state, reward = self.run_process(process_index)
 
         if process_index == 0:
@@ -218,13 +193,12 @@ class QLearning:
 
         return index_solution_processes
 
-    def __run_env(self, verbose = False):
-        self.verbose = verbose
+    def __run_env(self):
 
         self.new_solution_processes = {}
         new_processes = []
         index_solution_processes = 0
-        # while (self.current_processes or self.state != (0,) and self.current_delay < self.delay):
+
         while (self.is_anything_doable() and self.current_delay < self.delay):
 
             if type(self.q_table.get(self.state)) != np.ndarray:
@@ -255,16 +229,9 @@ class QLearning:
             self.solution_stock = self.stocks
 
 
-    def __reinitialize(self, stockTmp, do_random_stock = False):
-        if do_random_stock:
-            for key in self.stocks:
-                if self.max_values.get(key):
-                    self.stocks[key] = self.max_values[key] * random.randint(1, 10)
-                else:
-                    self.stocks[key] = 0
-                print(f"{key}  :  {self.stocks[key]}")
-        else:
-            self.stocks = copy.copy(stockTmp)
+    def __reinitialize(self, stockTmp):
+        
+        self.stocks = copy.copy(stockTmp)
 
         self.current_stocks = copy.copy(self.stocks)
 
@@ -273,20 +240,15 @@ class QLearning:
         self.current_processes = []
 
     def train(self, epochs):
+        
         stockTmp = copy.copy(self.stocks)
 
         table = []
 
         for i in range (1, epochs):
-            if random.uniform(0, 1) < 1:
-                self.__reinitialize(stockTmp, False)
-            else:
-                self.__reinitialize(stockTmp, True)
-            self.__run_env(False)
-            self.actions_history.append(self.actions)
-            self.actions = {}
-            print(f"Episode: {i}, delay: {self.current_delay}, epsilone: {self.epsilon}, {self.optimized_stock_name}: {[value for key, value in self.stocks.items() if key in self.optimized_stock_name]}")
-            print(f"State number: {len(self.q_table)}")
+
+            self.__reinitialize(stockTmp)
+            self.__run_env()
 
             if self.stocks[self.optimized_stock_name[0]] > 0:
                 fitness = self.current_delay / self.stocks[self.optimized_stock_name[0]]
@@ -297,14 +259,11 @@ class QLearning:
 
             if self.epsilon > 0.2 and i % (epochs / 10) == 0:
                 self.epsilon -= 0.025
-
-        values = [value for value in table if value <= 50]
-        print(values)
         
-        self.__reinitialize(stockTmp, False)
+        self.__reinitialize(stockTmp)
 
     def __print_stocks_results(self):
-        
+
         print("Stocks :")
         for name in self.solution_stock:
 
@@ -314,8 +273,7 @@ class QLearning:
 
         solution_runnable = self.solution[1]
         current_delay = 0
-        
-        
+      
         delays = []
         delay_index = 0
 
@@ -359,28 +317,11 @@ class QLearning:
 
 
     def run(self):
+
         self.not_training = True
         self.epsilon = 0.1
+
         if self.solution:
             self.__run_solution()
         else:
             print("Solution not found, please re-launch the search with more epochs or a with a bigger delay")
-        # Define a color map for different lines
-        # print(len(self.q_table))
-        # for state, value in self.q_table.items():
-        #     print(f'State: {state}, values: {value}')
-
-        x_values = list(self.optimized_stock_evo.keys())
-        y_values = list(self.optimized_stock_evo.values())
-
-        # Creating the plot
-        plt.plot(x_values, y_values)
-
-        # Adding title and labels
-        plt.title('Optimized Stock Evolution')
-        plt.xlabel('Time (or other x-axis variable)')
-        plt.ylabel('Stock Value')
-
-        # Show the plot
-        # plt.show()
-        # print(self.current_delay)
