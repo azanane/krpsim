@@ -1,0 +1,17 @@
+Config File : ressources/ikea
+
+0: do_montant
+0: do_montant
+0: do_fond
+0: do_etagere
+0: do_etagere
+0: do_etagere
+20: do_armoire_ikea
+no more process doable at time : 50
+Stocks :
+planche : 0
+montant : 0
+fond : 0
+etagere : 0
+armoire : 1
+Config File : ressources/ikea

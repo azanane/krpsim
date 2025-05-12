@@ -311,7 +311,7 @@ class QLearning:
                     print(f'{current_delay}: {self.processes[process_index].name}')
 
         current_delay = current_delay + delays[len(delays) - 1]
-        print(f'no more process doable at time {current_delay}')
+        print(f'no more process doable at time : {current_delay}')
 
         self.__print_stocks_results()
 

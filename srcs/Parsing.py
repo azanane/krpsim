@@ -4,7 +4,7 @@ from srcs.Krpsim import Krpsim
 
 class Parser:
 
-    def __init__(self):
+    def __init__(self, verbose=True):
         self.index = 0
         self.new_index = 0
         self.name_tmp = 0
@@ -13,7 +13,8 @@ class Parser:
         self.optimized_stock = ""
         self.krpsim = Krpsim()
 
-        self.get_file_path()
+        if verbose == True:
+            self.get_file_path()
         
     def get_file_path(self):
         parser = ArgumentParser()
@@ -28,6 +29,7 @@ class Parser:
         if (file_path is None or delay is None):
             print("Correct format: python3 QLearning.py -f {file_path} -d {delay}")
             exit(1)
+        print(f'Config File : {file_path}\n')
         self.krpsim.delay = int(delay)
         if epochs is None:
             self.krpsim.epochs = 100
