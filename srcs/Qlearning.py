@@ -93,9 +93,9 @@ class QLearning:
 
         return tuple(state)
 
-    def is_doable(self, stocks, proccess_index):
+    def is_doable(self, stocks, process_index):
 
-        for item, required_quantity in self.processes[proccess_index].needs.items():
+        for item, required_quantity in self.processes[process_index].needs.items():
             # If the required quantity of any item is greater than the stock, the process cannot be done
             if stocks.get(item, 0) < required_quantity:
                 return False
@@ -164,7 +164,7 @@ class QLearning:
 
         next_state = self.get_state(self.current_stocks)
 
-        # If we can only do nothing and there is no current proccess it is then end
+        # If we can only do nothing and there is no current process it is then end
         if next_state == (0,) and len(self.current_processes) == 0:
             reward -= 100
         return next_state, reward
@@ -277,6 +277,7 @@ class QLearning:
         delays = []
         delay_index = 0
 
+        
         for index in solution_runnable:
 
             if solution_runnable[index]:

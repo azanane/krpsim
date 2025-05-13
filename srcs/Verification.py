@@ -7,7 +7,6 @@ class Verification:
 
     def __init__(self):
 
-        self.get_file_path()
         self.krpsim = None
         self.stocks = {}
         self.processes = {}
@@ -18,30 +17,49 @@ class Verification:
 
         self.get_file_path()
 
-    def is_doable(self, proccess_index):
+        print("Valid")
 
-        for item, required_quantity in self.processes[proccess_index].needs.items():
+    def check_end_stocks(self, stock_name, quantity):
+
+        if self.stocks[stock_name] != quantity:
+            raise ValueError(f"Error in end Stocks : the result for {stock_name} should be {self.stocks.get(stock_name, 0)}, but you find {quantity}")
+
+
+
+    def is_doable(self, process_index):
+
+        for item, required_quantity in self.processes[process_index].needs.items():
             # If the required quantity of any item is greater than the stock, the process cannot be done
             if self.stocks.get(item, 0) < required_quantity:
                 return False
         
         return True
 
+    def run_process(self, process_index):
+
+        for item, need_quantity in self.processes[process_index].needs.items():
+
+            self.stocks[item] -= need_quantity
+
     def execute_list(self, list_processes):
 
         for name in list_processes:
             process_index = self.get_process_index(name)
-            
 
+            for item, result_quantity in self.processes[process_index].results.items():
+
+                self.stocks[item] += result_quantity
 
     def get_process_index(self, process_name):
 
-        for index, process in self.processes:
+        index = 0
+        for process in self.processes:
 
             if process_name == process.name:
                 return index
+            index += 1
 
-        return -1 
+        return -1
 
     def init_krpsim_class(self, config_file):
 
@@ -102,31 +120,68 @@ class Verification:
                     is_running = True
                 elif self.name_tmp == "nomoreprocessdoableattime":
                     end_delay = int(line[len(self.name_tmp) + 1:])
+                    last_delay_add = 0
+                    for index_processes in current_processes:
+                        self.execute_list(current_processes[index_processes])
+                        last_delay_add = index_processes
+
+                    current_delay += last_delay_add
+                    if current_delay != end_delay:
+                        raise ValueError(f'Error in end delay, the result should be {current_delay}, but we got {end_delay}')
                     is_running = False
-                elif self.name_tmp == "stock":
+                elif self.name_tmp == "stocks":
                     is_end_stocks = True
                 elif is_running:
-                   new_delay = int(line[:len(self.name_tmp)])
 
-                   finish_delay = new_delay - current_delay
-                   if finish_delay > 0:
+                    if not line[:len(self.name_tmp)].isnumeric():
+                        raise ValueError(f'Error ine line : "{line}" , file corrupted')
+                    new_delay = int(line[:len(self.name_tmp)])
+
+                    finish_delay = new_delay - current_delay
+                    if finish_delay > 0:
                        
-                       for index_processes in current_processes:
-                           if index_processes < finish_delay:
+                        for index_processes in current_processes.copy():
+                            if index_processes <= finish_delay:
                                 self.execute_list(current_processes[index_processes])
+                            else:
+                                if current_processes.get(index_processes - finish_delay):
+                                    current_processes[index_processes - finish_delay].append(current_processes[index_processes])
+                                else: 
+                                    current_processes[index_processes - finish_delay] = current_processes[index_processes]
+                                
+                            del current_processes[index_processes]
 
+                        current_delay = new_delay
 
-                   new_process = line[len(self.name_tmp) + 1:]
-                   process_index = self.get_process_index(new_process)
-                   if process_index == -1:
-                       raise ValueError(f"Config file {file_path} corrupted")
+                    new_process = line[len(self.name_tmp) + 1:]
+                    process_index = self.get_process_index(new_process)
+                    if process_index == -1:
+                        raise ValueError(f"Config file {file_path} corrupted")
+                    if not self.is_doable(process_index):
+                        raise ValueError(f"Cannot do the process {line}")
                    
-                   if current_processes[self.processes[process_index].delay]:
+                    list_processes = []
+                    if current_processes.get(self.processes[process_index].delay):
                         list_processes = current_processes[self.processes[process_index].delay]
                         list_processes.append(new_process)
-                   else:
-                        current_processes[self.processes[process_index].delay] =  [new_process]
-                # elif is_end_stocks:
+                    else:
+                        list_processes.append(new_process)
+
+                    current_processes[self.processes[process_index].delay] =  list_processes
+
+                    # sort current_processes
+                    myKeys = list(current_processes.keys())
+                    myKeys.sort()
+
+                    # Sorted Dictionary
+                    sorted_dict = {i: current_processes[i] for i in myKeys}
+                    current_processes = sorted_dict
+
+                    self.run_process(process_index)
+                elif is_end_stocks:
+
+                    stock_name = line[:len(self.name_tmp)]
+                    quantity = int(line[len(self.name_tmp) + 1:])
+                    self.check_end_stocks(stock_name, quantity)
                 else:
                     raise ValueError(f"Config file {file_path} corrupted")
-
