@@ -129,7 +129,7 @@ class Verification:
 
     def init_krpsim_class(self, config_file):
 
-        parser_class = Parser(False)
+        parser_class = Parser(False, is_verification=True)
 
         parser_class.parse_file(config_file)
         parser_class.initialize_stock()

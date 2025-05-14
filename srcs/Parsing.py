@@ -4,7 +4,7 @@ from srcs.Krpsim import Krpsim
 
 class Parser:
 
-    def __init__(self, verbose=True):
+    def __init__(self, verbose=True, is_verification=False):
         self.index = 0
         self.new_index = 0
         self.name_tmp = 0
@@ -15,7 +15,8 @@ class Parser:
 
         if verbose == True:
             self.get_file_path()
-        self.__verify()
+        if not is_verification:
+            self.__verify()
 
     
     def __verify(self):

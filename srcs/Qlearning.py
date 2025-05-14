@@ -138,7 +138,7 @@ class QLearning:
             if value_needed != 0 and value_needed > value:
                 reward -= 50 * value_needed
             # Si on a le stock deja au moins 20 fois superieur au resultat alors on achete plus 
-            if key not in self.optimized_stock_name and self.stocks[key] > self.max_values[key] * 10:
+            if key not in self.optimized_stock_name and self.stocks.get(key, 0) > self.max_values.get(key, 0) * 10:
                 reward += -30 * value
             # On donne une reward en fonction de la quantité du resultat
             elif key in self.optimized_stock_name and processTmp in self.optimized_processes:
