@@ -325,4 +325,4 @@ class QLearning:
         if self.solution:
             self.__run_solution()
         else:
-            print("Solution not found, please re-launch the search with more epochs or a with a bigger delay")
+            print("Solution not found, it may not be possible, otherwise please re-launch the search with more epochs or a bigger delay")

@@ -15,6 +15,19 @@ class Parser:
 
         if verbose == True:
             self.get_file_path()
+        self.__verify()
+
+    
+    def __verify(self):
+        if self.krpsim.optimized_stocks == []:
+            raise ValueError(f'Error, no optimized stock given.')
+        elif len(self.krpsim.processes) == 1:
+            raise ValueError(f'Error, no process given.')
+        stock_list = [name for name,value in self.krpsim.stocks.items()]
+        for stock in self.krpsim.optimized_stocks:
+            if stock not in stock_list:
+                raise ValueError(f'Error, [{stock}] in optimized stocks doesn\'t exist.')
+
         
     def get_file_path(self):
         parser = ArgumentParser()
@@ -128,7 +141,10 @@ class Parser:
         self.index = self.new_index
         self.while_is_digit(line)
         substring = ''.join([line[i] for i in range(self.index, self.new_index)])
-        quantity = int(substring)
+        try:
+            quantity = int(substring)
+        except Exception:
+            raise ValueError(f'Error converting {substring} to int. Must have an error in file line {line}')
         if quantity < 0:
             raise ValueError(f"Error occurred in line: {line}. Quantity: {quantity} cannot be negative.")
         return quantity

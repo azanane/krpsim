@@ -10,7 +10,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "args": ["-f", "ressources/dofus", "-d", "50000"],
+            "args": ["-f", "ressources/missformed", "-d", "50000"],
             "console": "integratedTerminal",
             "justMyCode": false
         },
