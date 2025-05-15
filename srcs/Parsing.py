@@ -81,7 +81,7 @@ class Parser:
 
     def read_stock(self, line):
         quantity_tmp = 0
-        quantity_tmp = self.read_next_quantity(line, quantity_tmp)
+        quantity_tmp = self.read_next_quantity(line, quantity_tmp, from_process=False)
         self.is_end_of_line_valid(line)
         self.krpsim.add_or_update_stock(self.name_tmp, quantity_tmp)
 
@@ -137,9 +137,13 @@ class Parser:
         self.new_index -= 1
         self.is_end_of_line_valid(line)
 
-    def read_next_quantity(self, line, quantity):
+    def read_next_quantity(self, line, quantity, from_process=True):
         self.index = self.new_index
         self.while_is_digit(line)
+
+        if not from_process and self.new_index != len(line) and line[self.new_index] != '#':
+            raise ValueError(f'Error in stock {line}')
+
         substring = ''.join([line[i] for i in range(self.index, self.new_index)])
         try:
             quantity = int(substring)
@@ -169,7 +173,7 @@ class Parser:
         return process_tmp
 
     def pass_char(self, line, c, only_one = False):
-        while self.new_index < len(line) and line[self.new_index] == c:
+        while self.new_index < len(line) - 1 and line[self.new_index] == c:
             self.new_index += 1
             if only_one:
                 break
