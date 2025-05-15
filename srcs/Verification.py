@@ -129,7 +129,7 @@ class Verification:
 
     def init_krpsim_class(self, config_file):
 
-        parser_class = Parser(False, is_verification=True)
+        parser_class = Parser(False)
 
         parser_class.parse_file(config_file)
         parser_class.initialize_stock()
@@ -199,7 +199,7 @@ class Verification:
                 elif is_running:
 
                     self.check_processes(line)
-                elif is_end_stocks and line[len(self.name_tmp) + 1:].isnumeric() and self.stocks.get(line[:len(self.name_tmp)]):
+                elif is_end_stocks and line[len(self.name_tmp) + 1:].isnumeric() and self.stocks.get(line[:len(self.name_tmp)]) != None:
 
                     stock_name = line[:len(self.name_tmp)]
                     quantity = int(line[len(self.name_tmp) + 1:])
