@@ -23,10 +23,11 @@ class Verification:
 
         print("Valid")
 
-    def check_end_stocks(self, stock_name, quantity):
-
-        if self.stocks[stock_name] != quantity:
-            raise ValueError(f"Error in end Stocks : the result for {stock_name} should be {self.stocks.get(stock_name, 0)}, but you find {quantity}")
+    def check_end_stocks(self, end_stocks):
+        for key, value in self.stocks.items():
+            end_value = end_stocks.get(key, None)
+            if (end_value == None or end_value != value):
+                raise ValueError(f"Error in end Stocks : the result for {key} should be {value}, but you find {end_value}")
 
     def check_end_delay(self, end_time):
 
@@ -170,6 +171,8 @@ class Verification:
         end_delay_bool = True
         stocks_bool = True
 
+        end_stocks = {}
+
         with open(self.file_path) as input_file:
 
             for line in input_file:
@@ -200,10 +203,11 @@ class Verification:
 
                     self.check_processes(line)
                 elif is_end_stocks and line[len(self.name_tmp) + 1:].isnumeric() and self.stocks.get(line[:len(self.name_tmp)]) != None:
-
                     stock_name = line[:len(self.name_tmp)]
                     quantity = int(line[len(self.name_tmp) + 1:])
-
-                    self.check_end_stocks(stock_name, quantity)
+                    end_stocks[stock_name] = quantity
                 else:
                     raise ValueError(f"Config file {self.file_path} corrupted")
+
+        self.check_end_stocks(end_stocks)
+        
