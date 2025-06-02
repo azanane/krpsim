@@ -157,7 +157,7 @@ class Verification:
         self.file_path = args.data_file
 
         if (self.file_path is None):
-            print("Correct format: python3 QLearning.py -f {self.file_path}")
+            print("Correct format: python3 krpsim_verif.py -f {self.file_path}")
             exit(1)
 
         self.iterate_file()

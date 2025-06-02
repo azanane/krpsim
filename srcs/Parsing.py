@@ -40,7 +40,7 @@ class Parser:
         delay = args.delay
         epochs = args.epochs
         if (file_path is None or delay is None):
-            print("Correct format: python3 QLearning.py -f {file_path} -d {delay}")
+            print("Correct format: python3 krpsim.py -f {file_path} -d {delay}")
             exit(1)
         print(f'Config File : {file_path}\n')
         self.krpsim.delay = int(delay)
